@@ -1,5 +1,5 @@
-import CycleScreen from "./cycle";
+import WaterScreen from "./water";
 
 export default function Page() {
-  return <CycleScreen />;
+  return <WaterScreen />;
 }
