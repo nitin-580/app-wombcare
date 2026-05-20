@@ -1,5 +1,5 @@
-import WaterScreen from "./water";
+import { Redirect } from "expo-router";
 
 export default function Page() {
-  return <WaterScreen />;
+  return <Redirect href="/(tabs)" />;
 }

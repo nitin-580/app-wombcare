@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
 
+
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
     PoppinsSemiBold: require("../../../assets/fonts/Poppins-SemiBold.ttf"),
