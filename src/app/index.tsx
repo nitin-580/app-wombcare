@@ -1,5 +1,5 @@
-import LoginScreen from "../app/screens/Auth/LoginScreen";
+import CycleScreen from "./cycle";
 
 export default function Page() {
-  return <LoginScreen />;
+  return <CycleScreen />;
 }
