@@ -4,10 +4,22 @@ import {
     StyleSheet,
     TouchableOpacity,
   } from "react-native";
+  import { useFonts } from "expo-font";
+
   
   import { Ionicons } from "@expo/vector-icons";
   
   export default function DashboardHeader() {
+    const [fontsLoaded] = useFonts({
+        PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
+        PoppinsSemiBold: require("../../../assets/fonts/Poppins-SemiBold.ttf"),
+        PoppinsBold: require("../../../assets/fonts/Poppins-Bold.ttf"),
+      });
+    
+      if (!fontsLoaded) {
+        return null;
+      }
+    
   
     return (
   
@@ -16,11 +28,11 @@ import {
         <View>
   
           <Text style={styles.welcome}>
-            Welcome Back 👋
+            Hi Nitin
           </Text>
   
           <Text style={styles.name}>
-            Nitin
+           Here's your health Summary
           </Text>
   
         </View>
@@ -47,20 +59,23 @@ import {
       justifyContent: "space-between",
       alignItems: "center",
   
-      marginTop: 70,
-      marginBottom: 30,
+      marginTop: 30,
+      marginBottom: 10,
     },
   
     welcome: {
-      fontSize: 16,
-      color: "#777",
+      fontSize: 32,
+      color: "#111",
+      fontFamily: "PoppinsSemiBold",
+
     },
   
     name: {
-      fontSize: 32,
-      fontWeight: "700",
-      color: "#111",
-      marginTop: 4,
+      fontSize: 16,
+      color: "#777",
+      marginTop: 0,
+      marginBottom: 8,
+      fontFamily: "PoppinsRegular",
     },
   
     profileButton: {

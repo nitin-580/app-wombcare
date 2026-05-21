@@ -1,9 +1,9 @@
 import {
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     View,
   } from "react-native";
+  import { SafeAreaView } from "react-native-safe-area-context";
   
   import CycleTopHeader
   from "./components/cycleTracker/CycleTopHeader";

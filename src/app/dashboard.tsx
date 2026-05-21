@@ -1,9 +1,9 @@
 import {
-    SafeAreaView,
     ScrollView,
     View,
     StyleSheet,
   } from "react-native";
+  import { SafeAreaView } from "react-native-safe-area-context";
   
   import DashboardHeader
   from "./components/dashboard/DashboardHeader";
@@ -19,6 +19,16 @@ import {
   
   import SectionTitle
   from "./components/dashboard/SectionTitle";
+
+  import WellnessStatsCards from "./components/dashboard/ToggleButton";
+
+  import EnergyLevelsCard from "./components/dashboard/EnergyGraphs";
+
+  import UpcomingClassCard from "./components/dashboard/UpcomingClasses";
+
+  import AIHealthAssistantCard from "./components/dashboard/ChatSection";
+
+  import TutorialVideosSection from "./components/dashboard/VideoTutorial";
   
   export default function Dashboard() {
   
@@ -33,40 +43,16 @@ import {
           <DashboardHeader />
   
           <HealthScoreCard />
-  
-          <SectionTitle title="Quick Actions" />
-  
-          <View style={styles.row}>
-  
-            <QuickActionCard
-              title="Cycle"
-              icon="calendar"
-              color="#FF4D8D"
-            />
-  
-            <QuickActionCard
-              title="Workout"
-              icon="fitness"
-              color="#7B61FF"
-            />
-  
-          </View>
-  
-          <View style={styles.row}>
-  
-            <QuickActionCard
-              title="AI Chat"
-              icon="chatbubble"
-              color="#00B894"
-            />
-  
-            <QuickActionCard
-              title="Doctors"
-              icon="medkit"
-              color="#F39C12"
-            />
-  
-          </View>
+
+          <WellnessStatsCards />
+
+          <EnergyLevelsCard />
+
+          <UpcomingClassCard />
+
+          <TutorialVideosSection />
+
+          <AIHealthAssistantCard />
   
           <SectionTitle title="Today's Insights" />
   

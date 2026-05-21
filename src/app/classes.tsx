@@ -1,8 +1,8 @@
 import {
-    SafeAreaView,
     ScrollView,
     StyleSheet,
   } from "react-native";
+  import { SafeAreaView } from "react-native-safe-area-context";
   
   import ClassesHeader
   from "./components/classes/ClassesHeader";
