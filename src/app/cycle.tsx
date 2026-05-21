@@ -22,6 +22,10 @@ import {
   
   import InsightInfoCard
   from "./components/cycleTracker/InsightsInfoCard";
+
+  import CycleLengthCard from "./components/cycleTracker/UpcomingPeriod";
+
+  import PeriodTrackerCalendarCard from "./components/cycleTracker/CalenderCard";
   
   export default function CycleScreen() {
   
@@ -37,18 +41,13 @@ import {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-  
-          {/* HEADER */}
-  
-          <CycleTopHeader />
+
+          <PeriodTrackerCalendarCard />
+
+          <CycleLengthCard />
+          
   
           {/* DATE SELECTOR */}
-  
-          <DateSelector />
-  
-          {/* CYCLE RING */}
-  
-          <CycleRingCard />
   
           {/* LEGEND */}
   
@@ -59,25 +58,6 @@ import {
           <LogPeriodButton />
   
           {/* INSIGHT CARDS */}
-  
-          <View style={styles.cardsContainer}>
-  
-            <InsightInfoCard
-              title="Chances of Pregnancy"
-              value="High"
-            />
-  
-            <InsightInfoCard
-              title="Ovulation Status"
-              value="Active"
-            />
-  
-            <InsightInfoCard
-              title="Next Expected Period"
-              value="Aug 18"
-            />
-  
-          </View>
   
         </ScrollView>
   
