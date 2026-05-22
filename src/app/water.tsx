@@ -18,6 +18,8 @@ import {
   
   import ReminderCard
   from "./components/waterTracker/ReminderCard";
+
+  import CustomWaterInputButton from "./components/waterTracker/CustomWater";
   
   export default function WaterScreen() {
   
@@ -35,6 +37,8 @@ import {
           <WaterProgressCard />
   
           <QuickAddWater />
+
+          <CustomWaterInputButton />
   
           <HydrationInsight />
   

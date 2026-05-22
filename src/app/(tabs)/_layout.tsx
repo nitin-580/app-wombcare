@@ -40,7 +40,7 @@ export default function TabsLayout() {
             <Ionicons
               name="home"
               size={26}
-              color={focused ? "#FF4D8D" : "white"}
+              color={focused ? "#4F46E5" : "white"}
             />
           ),
         }}
@@ -53,7 +53,7 @@ export default function TabsLayout() {
             <Ionicons
               name="calendar"
               size={26}
-              color={focused ? "#FF4D8D" : "white"}
+              color={focused ? "#4F46E5" : "white"}
             />
           ),
         }}
@@ -66,7 +66,7 @@ export default function TabsLayout() {
             <Ionicons
               name="happy"
               size={26}
-              color={focused ? "#FF4D8D" : "white"}
+              color={focused ? "#4F46E5" : "white"}
             />
           ),
         }}
@@ -79,7 +79,7 @@ export default function TabsLayout() {
             <Ionicons
               name="water"
               size={26}
-              color={focused ? "#FF4D8D" : "white"}
+              color={focused ? "#4F46E5" : "white"}
             />
           ),
         }}
@@ -92,7 +92,7 @@ export default function TabsLayout() {
             <Ionicons
               name="videocam"
               size={26}
-              color={focused ? "#FF4D8D" : "white"}
+              color={focused ? "#4F46E5" : "white"}
             />
           ),
         }}

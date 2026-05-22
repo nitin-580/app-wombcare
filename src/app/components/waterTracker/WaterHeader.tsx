@@ -11,7 +11,7 @@ import {
       <View style={styles.container}>
   
         <Text style={styles.title}>
-          Water Tracker 💧
+          Water Tracker
         </Text>
   
         <Text style={styles.subtitle}>

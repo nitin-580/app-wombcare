@@ -18,6 +18,10 @@ import {
   
   import SaveMoodButton
   from "./components/moodTracker/SaveMoodButton";
+
+  import MoodTrendGraph from "./components/moodTracker/Graph";
+
+  import JournalHistoryCard from "./components/moodTracker/JournalHistory";
   
   export default function MoodScreen() {
   
@@ -31,14 +35,10 @@ import {
         >
   
           <MoodHeader />
-  
-          <MoodSelector />
-  
-          <StressLevelCard />
-  
-          <MoodNoteInput />
-  
-          <SaveMoodButton />
+
+          <MoodTrendGraph />
+
+          <JournalHistoryCard />
   
         </ScrollView>
   
