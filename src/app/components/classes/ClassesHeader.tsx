@@ -2,21 +2,48 @@ import {
     View,
     Text,
     StyleSheet,
+    TouchableOpacity,
+    Image,
   } from "react-native";
+  
+  import {
+    Ionicons,
+  } from "@expo/vector-icons";
+  
+  import { useFonts } from "expo-font";
   
   export default function ClassesHeader() {
   
+    const [fontsLoaded] = useFonts({
+  
+      PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
+  
+      PoppinsSemiBold: require("../../../assets/fonts/Poppins-SemiBold.ttf"),
+  
+      PoppinsBold: require("../../../assets/fonts/Poppins-Bold.ttf"),
+  
+    });
+  
+    if (!fontsLoaded) {
+      return null;
+    }
+  
     return (
   
-      <View style={styles.container}>
+      <View style={styles.header}>
   
         <Text style={styles.title}>
-          Wellness Classes
+          Classes
         </Text>
   
-        <Text style={styles.subtitle}>
-          Join live sessions & community discussions
-        </Text>
+        <Image
+  
+          source={{
+            uri: "https://randomuser.me/api/portraits/women/44.jpg",
+          }}
+  
+          style={styles.avatar}
+        />
   
       </View>
   
@@ -25,21 +52,34 @@ import {
   
   const styles = StyleSheet.create({
   
-    container: {
+    header: {
+  
+      flexDirection: "row",
+  
+      justifyContent: "space-between",
+  
+      alignItems: "center",
+  
       marginTop: 20,
-      marginBottom: 30,
+  
+      marginBottom: 28,
     },
   
     title: {
-      fontSize: 34,
-      fontWeight: "700",
+  
+      fontSize: 30,
+  
       color: "#111",
+  
+      fontFamily: "PoppinsBold",
     },
   
-    subtitle: {
-      marginTop: 8,
-      fontSize: 15,
-      color: "#666",
+    avatar: {
+  
+      width: 50,
+      height: 50,
+  
+      borderRadius: 25,
     },
   
   });
