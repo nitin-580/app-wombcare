@@ -1,99 +1,128 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import {
+  Tabs,
+} from "expo-router";
+
+import {
+  Ionicons,
+} from "@expo/vector-icons";
 
 export default function TabsLayout() {
 
   return (
 
     <Tabs
+
       screenOptions={{
+
         headerShown: false,
 
-        tabBarShowLabel: false,
-
         tabBarStyle: {
-          position: "absolute",
 
-          bottom: 0,
-          left: 20,
-          right: 20,
-
-          height: 100,
-
-          borderRadius: 0,
-
-          backgroundColor: "#111",
+          height: 80,
 
           borderTopWidth: 0,
 
           elevation: 0,
 
-          paddingTop: 10,
+          backgroundColor: "white",
+
+          paddingBottom: 10,
         },
+
+        tabBarActiveTintColor: "#5B4CF0",
+
+        tabBarInactiveTintColor: "#999",
       }}
     >
 
       <Tabs.Screen
+
         name="index"
+
         options={{
-          tabBarIcon: ({ focused }) => (
+
+          title: "Home",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
             <Ionicons
               name="home"
-              size={26}
-              color={focused ? "#4F46E5" : "white"}
+              size={size}
+              color={color}
             />
+
           ),
         }}
       />
 
       <Tabs.Screen
-        name="cycle"
+
+        name="classes"
+
         options={{
-          tabBarIcon: ({ focused }) => (
+
+          title: "Classes",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
+            <Ionicons
+              name="play-circle"
+              size={size}
+              color={color}
+            />
+
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+
+        name="cycle"
+
+        options={{
+
+          title: "Cycle",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
             <Ionicons
               name="calendar"
-              size={26}
-              color={focused ? "#4F46E5" : "white"}
+              size={size}
+              color={color}
             />
+
           ),
         }}
       />
 
       <Tabs.Screen
-        name="mood"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name="happy"
-              size={26}
-              color={focused ? "#4F46E5" : "white"}
-            />
-          ),
-        }}
-      />
 
-      <Tabs.Screen
-        name="water"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name="water"
-              size={26}
-              color={focused ? "#4F46E5" : "white"}
-            />
-          ),
-        }}
-      />
+        name="profile"
 
-      <Tabs.Screen
-        name="classes"
         options={{
-          tabBarIcon: ({ focused }) => (
+
+          title: "Profile",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
             <Ionicons
-              name="videocam"
-              size={26}
-              color={focused ? "#4F46E5" : "white"}
+              name="person"
+              size={size}
+              color={color}
             />
+
           ),
         }}
       />
