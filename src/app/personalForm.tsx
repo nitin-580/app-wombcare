@@ -32,17 +32,17 @@ import React, {
   
   const symptomOptions = [
   
-    "Irregular Periods",
-  
-    "Cramps",
-  
     "Acne",
   
-    "Mood Swings",
+    "Bloating",
   
     "Fatigue",
   
-    "Weight Gain",
+    "Mood Swings",
+  
+    "Cramps",
+  
+    "Irregular Periods",
   
     "PCOS",
   
@@ -56,41 +56,38 @@ import React, {
     const [step, setStep] =
       useState(1);
   
-    const totalSteps = 4;
+    const totalSteps = 3;
   
-    /* ---------------- BASIC ---------------- */
-  
-    const [fullName, setFullName] =
-      useState("");
+    /* ---------------- FORM ---------------- */
   
     const [age, setAge] =
       useState("");
   
-    const [phone, setPhone] =
+    const [weight, setWeight] =
       useState("");
   
-    const [city, setCity] =
+    const [height, setHeight] =
       useState("");
-  
-    /* ---------------- WELLNESS ---------------- */
   
     const [cycleLength,
       setCycleLength] =
+      useState("28");
+  
+    const [targetWater,
+      setTargetWater] =
+      useState("8");
+  
+    const [activePlan,
+      setActivePlan] =
       useState("");
   
-    const [waterGoal,
-      setWaterGoal] =
+    const [wellnessGoal,
+      setWellnessGoal] =
       useState("");
   
-    const [sleepHours,
-      setSleepHours] =
+    const [personalNotes,
+      setPersonalNotes] =
       useState("");
-  
-    const [activityLevel,
-      setActivityLevel] =
-      useState("");
-  
-    /* ---------------- SYMPTOMS ---------------- */
   
     const [selectedSymptoms,
       setSelectedSymptoms] =
@@ -98,30 +95,6 @@ import React, {
   
     const [customSymptom,
       setCustomSymptom] =
-      useState("");
-  
-    const [duration,
-      setDuration] =
-      useState("");
-  
-    /* ---------------- GOALS ---------------- */
-  
-    const [wellnessGoal,
-      setWellnessGoal] =
-      useState("");
-  
-    const [nutritionPreference,
-      setNutritionPreference] =
-      useState("");
-  
-    const [plan, setPlan] =
-      useState("");
-  
-    const [consultationTime,
-      setConsultationTime] =
-      useState("");
-  
-    const [notes, setNotes] =
       useState("");
   
     /* ---------------- UI ---------------- */
@@ -153,7 +126,7 @@ import React, {
       return null;
     }
   
-    /* ---------------- TOGGLE SYMPTOMS ---------------- */
+    /* ---------------- TOGGLE ---------------- */
   
     const toggleSymptom =
     (symptom: string) => {
@@ -181,7 +154,24 @@ import React, {
       }
     };
   
-    /* ---------------- NEXT ---------------- */
+    /* ---------------- BMI ---------------- */
+  
+    const calculateBMI = () => {
+  
+      const h =
+        Number(height) / 100;
+  
+      const w =
+        Number(weight);
+  
+      if (!h || !w) return 0;
+  
+      return +(
+        w / (h * h)
+      ).toFixed(1);
+    };
+  
+    /* ---------------- NAVIGATION ---------------- */
   
     const nextStep = () => {
   
@@ -202,150 +192,221 @@ import React, {
     /* ---------------- SUBMIT ---------------- */
   
     const handleSubmit =
-    async () => {
-  
-      try {
-  
-        setLoading(true);
-  
-        setError("");
-  
-        const token =
-          await AsyncStorage.getItem(
-            "userToken"
-          );
-  
-        const userData =
-          await AsyncStorage.getItem(
-            "userData"
-          );
-  
-        const parsedUser =
-          userData
-            ? JSON.parse(userData)
-            : null;
-  
-        const payload = {
-  
-          fullName,
-  
-          age: Number(age),
-  
-          phone,
-  
-          city,
-  
-          cycleLength,
-  
-          waterGoal,
-  
-          sleepHours,
-  
-          activityLevel,
-  
-          symptoms: [
-  
-            ...selectedSymptoms,
-  
-            ...(customSymptom
-              ? [customSymptom]
-              : []),
-  
-          ].join(", "),
-  
-          duration,
-  
-          wellnessGoal,
-  
-          nutritionPreference,
-  
-          plan,
-  
-          consultationTime,
-  
-          notes,
-        };
-  
-        console.log(payload);
-  
-        const response =
-          await fetch(
-  
-            "https://womb-care-backend-76858014616.us-central1.run.app/api/enrollments",
-  
-            {
-  
-              method: "POST",
-  
-              headers: {
-  
-                "Content-Type":
-                  "application/json",
-  
-                Authorization:
-                  `Bearer ${token}`,
-              },
-  
-              body: JSON.stringify(
-                payload
-              ),
-            }
-          );
-  
-        const data =
-          await response.json();
-  
-        console.log(data);
-  
-        if (!response.ok) {
-  
-          setError(
-            data.message ||
-            "Submission failed"
-          );
-  
-          return;
-        }
-  
-        const updatedUser = {
-  
-          ...parsedUser,
-  
-          onboardingCompleted:
-            true,
-        };
-  
-        await AsyncStorage.setItem(
-  
-          "userData",
-  
-          JSON.stringify(
-            updatedUser
-          )
-        );
-  
-        setSuccess(true);
-  
-        setTimeout(() => {
-  
-          router.replace("/(tabs)");
-  
-        }, 2000);
-  
-      } catch (err: any) {
-  
-        console.log(err);
-  
-        setError(
-          err.message
-        );
-  
-      } finally {
-  
-        setLoading(false);
-      }
+async () => {
+
+  try {
+
+    setLoading(true);
+
+    setError("");
+
+    const token =
+      await AsyncStorage.getItem(
+        "userToken"
+      );
+
+    const userData =
+      await AsyncStorage.getItem(
+        "userData"
+      );
+
+    if (!userData) {
+
+      setError(
+        "Please login again"
+      );
+
+      return;
+    }
+
+    const parsedUser =
+      JSON.parse(userData);
+
+    /* ---------------- CYCLE DATES ---------------- */
+
+    const today =
+      new Date();
+
+    const nextPeriodDate =
+      new Date();
+
+    nextPeriodDate.setDate(
+
+      today.getDate() +
+
+      Number(cycleLength)
+    );
+
+    /* ---------------- BMI ---------------- */
+
+    const bmi =
+      calculateBMI();
+
+    /* ---------------- PAYLOAD ---------------- */
+
+    const payload = {
+
+      id:
+        parsedUser.id ||
+
+        parsedUser._id,
+
+      name:
+        parsedUser.name,
+
+      email:
+        parsedUser.email,
+
+      age:
+        Number(age),
+
+      weight:
+        Number(weight),
+
+      height:
+        Number(height),
+
+      cycleLength:
+        Number(cycleLength),
+
+      targetWater:
+        Number(targetWater),
+
+      activePlan,
+
+      symptoms: [
+
+        ...selectedSymptoms,
+
+        ...(customSymptom
+          ? [customSymptom]
+          : []),
+
+      ],
+
+      personalNotes,
+
+      wellnessGoal,
+
+      bmi,
+
+      wellnessScore: 82,
+
+      profileCompleted: true,
+
+      /* ---------------- PERIOD TRACKER ---------------- */
+
+      cycleDay: 1,
+
+      cycleStartDate:
+        today.toISOString(),
+
+      nextPeriodDate:
+        nextPeriodDate.toISOString(),
+
+      isPeriodTrackerEnabled: true,
     };
-  
+
+    console.log(
+      "PROFILE PAYLOAD:",
+      payload
+    );
+
+    /* ---------------- API ---------------- */
+
+    const response =
+      await fetch(
+
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles",
+
+        {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`,
+          },
+
+          body: JSON.stringify(
+            payload
+          ),
+        }
+      );
+
+    const data =
+      await response.json();
+
+    console.log(
+      "PROFILE RESPONSE:",
+      data
+    );
+
+    if (
+
+      !response.ok ||
+
+      !data.success
+
+    ) {
+
+      setError(
+
+        data.message ||
+
+        "Failed to save profile"
+      );
+
+      return;
+    }
+
+    /* ---------------- SAVE USER ---------------- */
+
+    const updatedUser = {
+
+      ...parsedUser,
+
+      profileCompleted:
+        true,
+    };
+
+    await AsyncStorage.setItem(
+
+      "userData",
+
+      JSON.stringify(
+        updatedUser
+      )
+    );
+
+    setSuccess(true);
+
+    setTimeout(() => {
+
+      router.replace("/(tabs)");
+
+    }, 1800);
+
+  } catch (err: any) {
+
+    console.log(err);
+
+    setError(
+
+      err.message ||
+
+      "Connection failed"
+    );
+
+  } finally {
+
+    setLoading(false);
+  }
+};
     /* ---------------- SUCCESS ---------------- */
   
     if (success) {
@@ -425,7 +486,9 @@ import React, {
   
                 <View
                   style={[
+  
                     styles.progressFill,
+  
                     {
                       width:
                         `${(step / totalSteps) * 100}%`,
@@ -460,81 +523,100 @@ import React, {
                 <>
   
                   <Text style={styles.sectionTitle}>
-                    Personal Details
+                    Health Profile
                   </Text>
-  
-                  <View style={styles.inputContainer}>
-  
-                    <Text style={styles.label}>
-                      Full Name
-                    </Text>
-  
-                    <TextInput
-                      placeholder="Nitin Kumar"
-                      placeholderTextColor="#999"
-                      style={styles.input}
-                      value={fullName}
-                      onChangeText={setFullName}
-                    />
-  
-                  </View>
   
                   <View style={styles.row}>
   
-                    <View
-                      style={{
-                        flex: 1,
-                      }}
-                    >
+                    <View style={{ flex: 1 }}>
   
                       <Text style={styles.label}>
                         Age
                       </Text>
   
                       <TextInput
-                        placeholder="21"
+  
+                        placeholder="24"
+  
                         keyboardType="numeric"
+  
                         style={styles.input}
+  
                         value={age}
+  
                         onChangeText={setAge}
                       />
   
                     </View>
   
-                    <View
-                      style={{
-                        flex: 1,
-                      }}
-                    >
+                    <View style={{ flex: 1 }}>
   
                       <Text style={styles.label}>
-                        Phone
+                        Cycle Length
                       </Text>
   
                       <TextInput
-                        placeholder="+91 XXXXX XXXXX"
-                        keyboardType="phone-pad"
+  
+                        placeholder="28"
+  
+                        keyboardType="numeric"
+  
                         style={styles.input}
-                        value={phone}
-                        onChangeText={setPhone}
+  
+                        value={cycleLength}
+  
+                        onChangeText={
+                          setCycleLength
+                        }
                       />
   
                     </View>
   
                   </View>
   
-                  <View style={styles.inputContainer}>
+                  <View style={styles.row}>
   
-                    <Text style={styles.label}>
-                      City
-                    </Text>
+                    <View style={{ flex: 1 }}>
   
-                    <TextInput
-                      placeholder="Lucknow"
-                      style={styles.input}
-                      value={city}
-                      onChangeText={setCity}
-                    />
+                      <Text style={styles.label}>
+                        Height (cm)
+                      </Text>
+  
+                      <TextInput
+  
+                        placeholder="165"
+  
+                        keyboardType="numeric"
+  
+                        style={styles.input}
+  
+                        value={height}
+  
+                        onChangeText={setHeight}
+                      />
+  
+                    </View>
+  
+                    <View style={{ flex: 1 }}>
+  
+                      <Text style={styles.label}>
+                        Weight (kg)
+                      </Text>
+  
+                      <TextInput
+  
+                        placeholder="62"
+  
+                        keyboardType="numeric"
+  
+                        style={styles.input}
+  
+                        value={weight}
+  
+                        onChangeText={setWeight}
+                      />
+  
+                    </View>
   
                   </View>
   
@@ -548,123 +630,34 @@ import React, {
                 <>
   
                   <Text style={styles.sectionTitle}>
-                    Wellness Profile
+                    Wellness Details
                   </Text>
   
                   <View style={styles.inputContainer}>
   
                     <Text style={styles.label}>
-                      Cycle Length
+                      Daily Water Target
                     </Text>
   
                     <TextInput
-                      placeholder="28 days"
+  
+                      placeholder="8"
+  
+                      keyboardType="numeric"
+  
                       style={styles.input}
-                      value={cycleLength}
-                      onChangeText={setCycleLength}
-                    />
   
-                  </View>
+                      value={targetWater}
   
-                  <View style={styles.inputContainer}>
-  
-                    <Text style={styles.label}>
-                      Daily Hydration Goal
-                    </Text>
-  
-                    <TextInput
-                      placeholder="3 litres"
-                      style={styles.input}
-                      value={waterGoal}
-                      onChangeText={setWaterGoal}
-                    />
-  
-                  </View>
-  
-                  <View style={styles.inputContainer}>
-  
-                    <Text style={styles.label}>
-                      Sleep Hours
-                    </Text>
-  
-                    <TextInput
-                      placeholder="8 hours"
-                      style={styles.input}
-                      value={sleepHours}
-                      onChangeText={setSleepHours}
+                      onChangeText={
+                        setTargetWater
+                      }
                     />
   
                   </View>
   
                   <Text style={styles.label}>
-                    Activity Level
-                  </Text>
-  
-                  <View style={styles.optionsRow}>
-  
-                    {[
-                      "Low",
-                      "Moderate",
-                      "Active",
-                    ].map((item) => {
-  
-                      const active =
-                        activityLevel === item;
-  
-                      return (
-  
-                        <TouchableOpacity
-  
-                          key={item}
-  
-                          style={[
-  
-                            styles.optionButton,
-  
-                            active &&
-                              styles.activeOptionButton,
-                          ]}
-  
-                          onPress={() =>
-                            setActivityLevel(item)
-                          }
-                        >
-  
-                          <Text
-                            style={[
-  
-                              styles.optionText,
-  
-                              active &&
-                                styles.activeOptionText,
-                            ]}
-                          >
-  
-                            {item}
-  
-                          </Text>
-  
-                        </TouchableOpacity>
-                      );
-                    })}
-  
-                  </View>
-  
-                </>
-              )}
-  
-              {/* STEP 3 */}
-  
-              {step === 3 && (
-  
-                <>
-  
-                  <Text style={styles.sectionTitle}>
-                    Symptoms & Wellness
-                  </Text>
-  
-                  <Text style={styles.label}>
-                    Symptoms
+                    Common Symptoms
                   </Text>
   
                   <View style={styles.symptomContainer}>
@@ -733,248 +726,25 @@ import React, {
                   <View style={styles.inputContainer}>
   
                     <Text style={styles.label}>
-                      Duration
+                      Wellness Goal
                     </Text>
   
                     <TextInput
-                      placeholder="2 years"
-                      style={styles.input}
-                      value={duration}
-                      onChangeText={setDuration}
+  
+                      placeholder="Regularize periods"
+  
+                      multiline
+  
+                      textAlignVertical="top"
+  
+                      style={styles.textArea}
+  
+                      value={wellnessGoal}
+  
+                      onChangeText={
+                        setWellnessGoal
+                      }
                     />
-  
-                  </View>
-  
-                </>
-              )}
-  
-              {/* STEP 4 */}
-  
-              {step === 4 && (
-  
-                <>
-  
-                  <Text style={styles.sectionTitle}>
-                    Goals & Preferences
-                  </Text>
-  
-                  <Text style={styles.label}>
-                    Wellness Goal
-                  </Text>
-  
-                  <View style={styles.optionsRow}>
-  
-                    {[
-                      "Stress Relief",
-                      "Hormonal Balance",
-                      "Better Sleep",
-                      "Weight Management",
-                    ].map((item) => {
-  
-                      const active =
-                        wellnessGoal === item;
-  
-                      return (
-  
-                        <TouchableOpacity
-  
-                          key={item}
-  
-                          style={[
-  
-                            styles.optionButton,
-  
-                            active &&
-                              styles.activeOptionButton,
-                          ]}
-  
-                          onPress={() =>
-                            setWellnessGoal(item)
-                          }
-                        >
-  
-                          <Text
-                            style={[
-  
-                              styles.optionText,
-  
-                              active &&
-                                styles.activeOptionText,
-                            ]}
-                          >
-  
-                            {item}
-  
-                          </Text>
-  
-                        </TouchableOpacity>
-                      );
-                    })}
-  
-                  </View>
-  
-                  <Text style={styles.label}>
-                    Nutrition Preference
-                  </Text>
-  
-                  <View style={styles.optionsRow}>
-  
-                    {[
-                      "Vegetarian",
-                      "Balanced",
-                      "High Protein",
-                      "Vegan",
-                    ].map((item) => {
-  
-                      const active =
-                        nutritionPreference === item;
-  
-                      return (
-  
-                        <TouchableOpacity
-  
-                          key={item}
-  
-                          style={[
-  
-                            styles.optionButton,
-  
-                            active &&
-                              styles.activeOptionButton,
-                          ]}
-  
-                          onPress={() =>
-                            setNutritionPreference(item)
-                          }
-                        >
-  
-                          <Text
-                            style={[
-  
-                              styles.optionText,
-  
-                              active &&
-                                styles.activeOptionText,
-                            ]}
-                          >
-  
-                            {item}
-  
-                          </Text>
-  
-                        </TouchableOpacity>
-                      );
-                    })}
-  
-                  </View>
-  
-                  <Text style={styles.label}>
-                    Preferred Plan
-                  </Text>
-  
-                  <View style={styles.optionsRow}>
-  
-                    {[
-                      "basic",
-                      "premium",
-                      "consultation",
-                    ].map((item) => {
-  
-                      const active =
-                        plan === item;
-  
-                      return (
-  
-                        <TouchableOpacity
-  
-                          key={item}
-  
-                          style={[
-  
-                            styles.optionButton,
-  
-                            active &&
-                              styles.activeOptionButton,
-                          ]}
-  
-                          onPress={() =>
-                            setPlan(item)
-                          }
-                        >
-  
-                          <Text
-                            style={[
-  
-                              styles.optionText,
-  
-                              active &&
-                                styles.activeOptionText,
-                            ]}
-                          >
-  
-                            {item.charAt(0).toUpperCase() +
-                              item.slice(1)}
-  
-                          </Text>
-  
-                        </TouchableOpacity>
-                      );
-                    })}
-  
-                  </View>
-  
-                  <Text style={styles.label}>
-                    Consultation Time
-                  </Text>
-  
-                  <View style={styles.optionsRow}>
-  
-                    {[
-                      "Morning",
-                      "Afternoon",
-                      "Evening",
-                      "Night",
-                    ].map((item) => {
-  
-                      const active =
-                        consultationTime === item;
-  
-                      return (
-  
-                        <TouchableOpacity
-  
-                          key={item}
-  
-                          style={[
-  
-                            styles.optionButton,
-  
-                            active &&
-                              styles.activeOptionButton,
-                          ]}
-  
-                          onPress={() =>
-                            setConsultationTime(item)
-                          }
-                        >
-  
-                          <Text
-                            style={[
-  
-                              styles.optionText,
-  
-                              active &&
-                                styles.activeOptionText,
-                            ]}
-                          >
-  
-                            {item}
-  
-                          </Text>
-  
-                        </TouchableOpacity>
-                      );
-                    })}
   
                   </View>
   
@@ -985,13 +755,86 @@ import React, {
                     </Text>
   
                     <TextInput
+  
+                      placeholder="Anything you'd like to share..."
+  
                       multiline
-                      placeholder="Write your wellness notes..."
+  
                       textAlignVertical="top"
+  
                       style={styles.textArea}
-                      value={notes}
-                      onChangeText={setNotes}
+  
+                      value={personalNotes}
+  
+                      onChangeText={
+                        setPersonalNotes
+                      }
                     />
+  
+                  </View>
+  
+                </>
+              )}
+  
+              {/* STEP 3 */}
+  
+              {step === 3 && (
+  
+                <>
+  
+                  <Text style={styles.sectionTitle}>
+                    Active Plan
+                  </Text>
+  
+                  <View style={styles.optionsRow}>
+  
+                    {[
+                      "Starter Plan",
+  
+                      "Premium 90-Day Hormonal Wellness",
+  
+                      "Doctor Consultation",
+                    ].map((item) => {
+  
+                      const active =
+                        activePlan === item;
+  
+                      return (
+  
+                        <TouchableOpacity
+  
+                          key={item}
+  
+                          style={[
+  
+                            styles.optionButton,
+  
+                            active &&
+                              styles.activeOptionButton,
+                          ]}
+  
+                          onPress={() =>
+                            setActivePlan(item)
+                          }
+                        >
+  
+                          <Text
+                            style={[
+  
+                              styles.optionText,
+  
+                              active &&
+                                styles.activeOptionText,
+                            ]}
+                          >
+  
+                            {item}
+  
+                          </Text>
+  
+                        </TouchableOpacity>
+                      );
+                    })}
   
                   </View>
   
@@ -1051,7 +894,7 @@ import React, {
                     ) : (
   
                       <Text style={styles.nextButtonText}>
-                        Complete
+                        Complete Profile
                       </Text>
   
                     )}
@@ -1178,23 +1021,20 @@ import React, {
     row: {
       flexDirection: "row",
       gap: 12,
-      marginBottom: 10,
+      marginBottom: 18,
     },
   
     optionsRow: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-      marginBottom: 24,
+      gap: 14,
     },
   
     optionButton: {
-      paddingHorizontal: 18,
-      paddingVertical: 14,
-      borderRadius: 18,
+      padding: 18,
+      borderRadius: 22,
       backgroundColor: "#FAFAFA",
       borderWidth: 1,
       borderColor: "#EEE",
+      marginBottom: 14,
     },
   
     activeOptionButton: {
@@ -1204,7 +1044,7 @@ import React, {
   
     optionText: {
       color: "#555",
-      fontSize: 13,
+      fontSize: 15,
       fontFamily: "PoppinsMedium",
     },
   
@@ -1245,9 +1085,8 @@ import React, {
   
     buttonRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
-      marginTop: 30,
       gap: 14,
+      marginTop: 30,
     },
   
     backButton: {

@@ -10,7 +10,15 @@ import {
     Ionicons,
   } from "@expo/vector-icons";
   
-  export default function ProfileAvatarCard() {
+  export default function ProfileAvatarCard({
+    name,
+    age,
+    cycleDay,
+  }: {
+    name: string;
+    age: number;
+    cycleDay: number;
+  }) {
   
     return (
   
@@ -40,11 +48,11 @@ import {
         </View>
   
         <Text style={styles.name}>
-          Sarah Jenkins
+          {name}
         </Text>
   
         <Text style={styles.subtitle}>
-          Age: 28 • Cycle: Day 12
+          Age: {age} • Cycle: Day {cycleDay}
         </Text>
   
       </View>

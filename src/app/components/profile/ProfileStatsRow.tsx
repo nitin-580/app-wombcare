@@ -8,29 +8,32 @@ import {
     Ionicons,
   } from "@expo/vector-icons";
   
-  const stats = [
-  
-    {
-      icon: "calendar-outline",
-      label: "CYCLE",
-      value: "28 Days",
-    },
-  
-    {
-      icon: "moon-outline",
-      label: "SLEEP",
-      value: "7.5h Avg",
-    },
-  
-    {
-      icon: "water-outline",
-      label: "WATER",
-      value: "1.8L Avg",
-    },
-  
-  ];
-  
-  export default function ProfileStatsRow() {
+  export default function ProfileStatsRow({
+    cycleLength,
+    avgSleep,
+    avgWater,
+  }: {
+    cycleLength: number;
+    avgSleep: string;
+    avgWater: string;
+  }) {
+    const stats = [
+      {
+        icon: "calendar-outline",
+        label: "CYCLE",
+        value: `${cycleLength} Days`,
+      },
+      {
+        icon: "moon-outline",
+        label: "SLEEP",
+        value: avgSleep,
+      },
+      {
+        icon: "water-outline",
+        label: "WATER",
+        value: avgWater,
+      },
+    ];
   
     return (
   
