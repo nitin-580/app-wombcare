@@ -72,16 +72,18 @@ export default function WellnessStatsCards() {
   const waterIntake = profile?.waterIntake || 0;
   const targetWater = profile?.targetWater || 8;
 
-  // Extract sleep hours dynamically from symptoms array
-  const symptoms = Array.isArray(profile?.symptoms) ? profile.symptoms : [];
-  const sleepSymptom = symptoms.find(
-    (s) => typeof s === "string" && s.startsWith("Sleep:")
-  );
-  let sleepHours = 0;
-  if (sleepSymptom) {
-    const parsed = parseInt(sleepSymptom.replace("Sleep:", "").trim(), 10);
-    if (!isNaN(parsed)) {
-      sleepHours = parsed;
+  // Extract sleep hours dynamically from dedicated sleep field or symptoms array
+  let sleepHours = profile?.sleep || 0;
+  if (!sleepHours) {
+    const symptoms = Array.isArray(profile?.symptoms) ? profile.symptoms : [];
+    const sleepSymptom = symptoms.find(
+      (s) => typeof s === "string" && s.startsWith("Sleep:")
+    );
+    if (sleepSymptom) {
+      const parsed = parseInt(sleepSymptom.replace("Sleep:", "").trim(), 10);
+      if (!isNaN(parsed)) {
+        sleepHours = parsed;
+      }
     }
   }
 

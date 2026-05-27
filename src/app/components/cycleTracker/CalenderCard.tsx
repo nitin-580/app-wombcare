@@ -56,6 +56,7 @@ export default function FunctionalPeriodCalendar() {
     useState<HistoryItem[]>([]);
 
   const [profile, setProfile] = useState<any>(null);
+  const [periodHistory, setPeriodHistory] = useState<any[]>([]);
 
   const today = new Date();
 
@@ -149,6 +150,20 @@ export default function FunctionalPeriodCalendar() {
         const profileResult = await profileResponse.json();
         if (profileResult.success && profileResult.data) {
           setProfile(profileResult.data);
+        }
+
+        // Fetch dedicated period history
+        const periodResponse = await fetch(
+          `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}/period/history`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const periodResult = await periodResponse.json();
+        if (periodResult.success && Array.isArray(periodResult.data)) {
+          setPeriodHistory(periodResult.data);
         }
 
       } catch (err) {
@@ -354,7 +369,15 @@ export default function FunctionalPeriodCalendar() {
   const getCycleDayForDate = (targetDateStr: string) => {
     const candidates: Date[] = [];
     
-    // From history
+    // From dedicated period cycles history
+    periodHistory.forEach(item => {
+      if (item.startDate) {
+        const cleanDateStr = item.startDate.split("T")[0];
+        candidates.push(new Date(cleanDateStr));
+      }
+    });
+
+    // From history fallback
     history.forEach(item => {
       if (item.cycleDay === 1) {
         const cleanDateStr = item.date.split("T")[0];
@@ -415,25 +438,59 @@ export default function FunctionalPeriodCalendar() {
     await AsyncStorage.setItem("selectedPeriodLogDate", fullDate);
   };
 
-  const isDateInPeriodRange = (
-    currentDate: string
-  ) => {
-    const cycleDay = getCycleDayForDate(currentDate);
-    return cycleDay >= 1 && cycleDay <= PERIOD_LENGTH;
+  const isDateInPeriodRange = (currentDate: string) => {
+    const cleanTarget = currentDate.split("T")[0];
+    const todayStr = new Date().toISOString().split("T")[0];
+    
+    // Prioritize actual logged period history
+    const isActual = periodHistory.some(item => {
+      const cleanStart = item.startDate.split("T")[0];
+      const cleanEnd = item.endDate.split("T")[0];
+      return cleanTarget >= cleanStart && cleanTarget <= cleanEnd;
+    });
+    if (isActual) return true;
+
+    // Project only for future dates
+    if (cleanTarget > todayStr) {
+      const cycleDay = getCycleDayForDate(currentDate);
+      return cycleDay >= 1 && cycleDay <= PERIOD_LENGTH;
+    }
+    
+    return false;
   };
 
-  const isPeriodStartDate = (
-    currentDate: string
-  ) => {
-    const cycleDay = getCycleDayForDate(currentDate);
-    return cycleDay === 1;
+  const isPeriodStartDate = (currentDate: string) => {
+    const cleanTarget = currentDate.split("T")[0];
+    const todayStr = new Date().toISOString().split("T")[0];
+    
+    const isActualStart = periodHistory.some(item => {
+      const cleanStart = item.startDate.split("T")[0];
+      return cleanTarget === cleanStart;
+    });
+    if (isActualStart) return true;
+
+    if (cleanTarget > todayStr) {
+      const cycleDay = getCycleDayForDate(currentDate);
+      return cycleDay === 1;
+    }
+    return false;
   };
 
-  const isPeriodEndDate = (
-    currentDate: string
-  ) => {
-    const cycleDay = getCycleDayForDate(currentDate);
-    return cycleDay === PERIOD_LENGTH;
+  const isPeriodEndDate = (currentDate: string) => {
+    const cleanTarget = currentDate.split("T")[0];
+    const todayStr = new Date().toISOString().split("T")[0];
+    
+    const isActualEnd = periodHistory.some(item => {
+      const cleanEnd = item.endDate.split("T")[0];
+      return cleanTarget === cleanEnd;
+    });
+    if (isActualEnd) return true;
+
+    if (cleanTarget > todayStr) {
+      const cycleDay = getCycleDayForDate(currentDate);
+      return cycleDay === PERIOD_LENGTH;
+    }
+    return false;
   };
 
   /* ---------------- SELECTED DAY ---------------- */
@@ -961,20 +1018,18 @@ const styles = StyleSheet.create({
   periodDate: {
 
     backgroundColor: "#FF5D8F",
+
+    borderRadius: 21,
   },
 
   periodStartDate: {
 
-    borderTopLeftRadius: 21,
-
-    borderBottomLeftRadius: 21,
+    borderRadius: 21,
   },
 
   periodEndDate: {
 
-    borderTopRightRadius: 21,
-
-    borderBottomRightRadius: 21,
+    borderRadius: 21,
   },
 
   fertileDate: {

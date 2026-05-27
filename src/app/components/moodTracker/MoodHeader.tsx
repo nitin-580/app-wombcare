@@ -71,27 +71,33 @@ export default function MoodTrackerCard({ onSave }: { onSave: () => void }) {
               profile.mood.charAt(0).toUpperCase() + profile.mood.slice(1);
             setSelectedMood(formatted);
           }
-          // Set initial symptoms
-          const existingSymptoms = Array.isArray(profile.symptoms)
-            ? profile.symptoms
-            : [];
           
           // Note
-          const existingNote = existingSymptoms.find(
-            (s) => typeof s === "string" && s.startsWith("Note:")
-          );
-          if (existingNote) {
-            setNote(existingNote.replace("Note: ", ""));
+          if (profile.journal) {
+            setNote(profile.journal);
+          } else {
+            const existingSymptoms = Array.isArray(profile.symptoms) ? profile.symptoms : [];
+            const existingNote = existingSymptoms.find(
+              (s) => typeof s === "string" && s.startsWith("Note:")
+            );
+            if (existingNote) {
+              setNote(existingNote.replace("Note: ", ""));
+            }
           }
 
           // Sleep
-          const existingSleep = existingSymptoms.find(
-            (s) => typeof s === "string" && s.startsWith("Sleep:")
-          );
-          if (existingSleep) {
-            const parsedSleep = parseInt(existingSleep.replace("Sleep: ", ""), 10);
-            if (!isNaN(parsedSleep)) {
-              setSleepHours(parsedSleep);
+          if (profile.sleep !== undefined && profile.sleep !== null && profile.sleep > 0) {
+            setSleepHours(profile.sleep);
+          } else {
+            const existingSymptoms = Array.isArray(profile.symptoms) ? profile.symptoms : [];
+            const existingSleep = existingSymptoms.find(
+              (s) => typeof s === "string" && s.startsWith("Sleep:")
+            );
+            if (existingSleep) {
+              const parsedSleep = parseInt(existingSleep.replace("Sleep: ", ""), 10);
+              if (!isNaN(parsedSleep)) {
+                setSleepHours(parsedSleep);
+              }
             }
           }
         }
@@ -106,7 +112,24 @@ export default function MoodTrackerCard({ onSave }: { onSave: () => void }) {
     return null;
   }
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    Alert.alert(
+      "Confirm Journal Entry 📝",
+      "Warning: You should save your journal entry only once per day. Saving again will overwrite today's entry. Do you want to proceed?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Proceed",
+          onPress: () => performSave()
+        }
+      ]
+    );
+  };
+
+  const performSave = async () => {
     try {
       setSaving(true);
       const userData = await AsyncStorage.getItem("userData");
@@ -163,6 +186,8 @@ export default function MoodTrackerCard({ onSave }: { onSave: () => void }) {
           },
           body: JSON.stringify({
             mood: selectedMood.toLowerCase(),
+            sleep: sleepHours,
+            journal: note.trim(),
             symptoms: cleanedSymptoms,
           }),
         }

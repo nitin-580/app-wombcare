@@ -106,6 +106,52 @@ export default function TabsLayout() {
 
       <Tabs.Screen
 
+        name="water"
+
+        options={{
+
+          title: "Water",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
+            <Ionicons
+              name="water"
+              size={size}
+              color={color}
+            />
+
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+
+        name="mood"
+
+        options={{
+
+          title: "Mood",
+
+          tabBarIcon: ({
+            color,
+            size,
+          }) => (
+
+            <Ionicons
+              name="happy"
+              size={size}
+              color={color}
+            />
+
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+
         name="profile"
 
         options={{

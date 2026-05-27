@@ -48,16 +48,16 @@ export default function JournalHistoryCard() {
       );
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
-        // Map history rows containing "Note: ..." to journal entries
+        // Map history rows containing "Note: ..." or dedicated journal to journal entries
         const mapped: JournalItem[] = result.data
           .map((item: any) => {
             const symptoms: string[] = Array.isArray(item.symptoms) ? item.symptoms : [];
             const noteSymptom = symptoms.find((s) => typeof s === "string" && s.startsWith("Note:"));
-            if (!noteSymptom && !item.mood) return null; // Only keep logs with note or mood
+            if (!noteSymptom && !item.mood && !item.journal) return null; // Only keep logs with note, mood or journal
 
-            const noteText = noteSymptom
-              ? noteSymptom.replace("Note: ", "")
-              : "Logged mood without note";
+            const noteText = item.journal
+              ? item.journal
+              : (noteSymptom ? noteSymptom.replace("Note: ", "") : "Logged mood without note");
 
             // Format date nicely
             const dateObj = new Date(item.date);
@@ -80,9 +80,10 @@ export default function JournalHistoryCard() {
               date: formattedDate,
               time: formattedTime,
               text: noteText,
+              sleep: item.sleep || 0
             };
           })
-          .filter((x): x is JournalItem => x !== null)
+          .filter((x): x is any => x !== null)
           // Sort by date descending (newest first)
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -191,7 +192,12 @@ export default function JournalHistoryCard() {
                 <View style={styles.content}>
                   <View style={styles.topRow}>
                     <Text style={styles.date}>{item.date}</Text>
-                    <Text style={styles.time}>{item.time}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      {item.sleep > 0 && (
+                        <Text style={styles.sleepText}>💤 {item.sleep}h  •  </Text>
+                      )}
+                      <Text style={styles.time}>{item.time}</Text>
+                    </View>
                   </View>
 
                   <Text style={styles.description}>{item.text}</Text>
@@ -269,6 +275,11 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 12,
     color: "#777",
+    fontFamily: "PoppinsSemiBold",
+  },
+  sleepText: {
+    fontSize: 12,
+    color: "#6658F5",
     fontFamily: "PoppinsSemiBold",
   },
   description: {

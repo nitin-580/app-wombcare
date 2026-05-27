@@ -1,225 +1,507 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
+
 import { useFonts } from "expo-font";
+
+import { useFocusEffect } from "expo-router";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function CycleLengthCard() {
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+type PeriodHistoryItem = {
+  id: string;
+  startDate: string;
+  endDate: string;
+};
 
+export default function PeriodCalendar() {
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
+
     PoppinsSemiBold: require("../../../assets/fonts/Poppins-SemiBold.ttf"),
+
     PoppinsBold: require("../../../assets/fonts/Poppins-Bold.ttf"),
   });
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const userData = await AsyncStorage.getItem("userData");
-        if (!userData) return;
-        const parsed = JSON.parse(userData);
-        const userId = parsed.id || parsed._id;
-        if (!userId) return;
-        const token = await AsyncStorage.getItem("userToken");
+  const [loading, setLoading] =
+    useState(true);
 
-        const response = await fetch(
-          `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+  const [periodHistory, setPeriodHistory] =
+    useState<PeriodHistoryItem[]>([]);
+
+  const today = new Date();
+
+  const [currentMonth, setCurrentMonth] =
+    useState(today.getMonth());
+
+  const [currentYear, setCurrentYear] =
+    useState(today.getFullYear());
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPeriodHistory();
+    }, [])
+  );
+
+  /* ========================================= */
+  /* FETCH PERIOD HISTORY */
+  /* ========================================= */
+
+  const fetchPeriodHistory =
+    async () => {
+      try {
+        const token =
+          await AsyncStorage.getItem(
+            "userToken"
+          );
+
+        const userData =
+          await AsyncStorage.getItem(
+            "userData"
+          );
+
+        if (!userData) return;
+
+        const parsed =
+          JSON.parse(userData);
+
+        const userId =
+          parsed.id ||
+          parsed._id;
+
+        const response =
+          await fetch(
+            `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}/period/history`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const result =
+          await response.json();
+
+        console.log(
+          "PERIOD HISTORY:",
+          result
         );
-        const result = await response.json();
-        if (result.success && result.data) {
-          setProfile(result.data);
+
+        if (
+          result.success &&
+          Array.isArray(result.data)
+        ) {
+          setPeriodHistory(
+            result.data
+          );
         }
       } catch (err) {
-        console.log("Error loading upcoming period card profile:", err);
+        console.log(
+          "PERIOD ERROR:",
+          err
+        );
       } finally {
         setLoading(false);
       }
+    };
+
+  /* ========================================= */
+  /* DATE FORMATTER */
+  /* ========================================= */
+
+  const formatDate = (
+    date: Date
+  ) => {
+    const year =
+      date.getFullYear();
+
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  };
+
+  /* ========================================= */
+  /* CHECK PERIOD RANGE */
+  /* ========================================= */
+
+  const isPeriodDate = (
+    currentDate: string
+  ) => {
+    for (const item of periodHistory) {
+      if (!item.startDate)
+        continue;
+
+      const start =
+        new Date(item.startDate);
+
+      const end =
+        item.endDate
+          ? new Date(item.endDate)
+          : new Date(item.startDate);
+
+      start.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      end.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      const current =
+        new Date(currentDate);
+
+      current.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      if (
+        current >= start &&
+        current <= end
+      ) {
+        return true;
+      }
     }
-    loadProfile();
-  }, []);
 
-  if (!fontsLoaded) {
-    return null;
-  }
+    return false;
+  };
 
-  if (loading) {
+  if (!fontsLoaded || loading) {
     return (
-      <View style={styles.card}>
-        <ActivityIndicator size="small" color="#4F46E5" />
+      <View style={styles.loader}>
+        <ActivityIndicator
+          size="large"
+          color="#7C3AED"
+        />
       </View>
     );
   }
 
-  const cycleDay = profile?.cycleDay || 1;
-  const cycleLength = profile?.cycleLength || 28;
-  const daysUntilPeriod = Math.max(0, cycleLength - cycleDay);
+  /* ========================================= */
+  /* CALENDAR */
+  /* ========================================= */
 
-  const progressWidth = Math.min(100, Math.max(0, (cycleDay / cycleLength) * 100));
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
-  let headingText = `Next period in ${daysUntilPeriod} days`;
-  if (daysUntilPeriod === 0) {
-    headingText = "Period expected today!";
-  } else if (daysUntilPeriod === 1) {
-    headingText = "Next period in 1 day";
+  const weekDays = [
+    "S",
+    "M",
+    "T",
+    "W",
+    "T",
+    "F",
+    "S",
+  ];
+
+  const daysInMonth = new Date(
+    currentYear,
+    currentMonth + 1,
+    0
+  ).getDate();
+
+  const firstDay = new Date(
+    currentYear,
+    currentMonth,
+    1
+  ).getDay();
+
+  const calendarDays = [];
+
+  for (let i = 0; i < firstDay; i++) {
+    calendarDays.push(null);
+  }
+
+  for (
+    let i = 1;
+    i <= daysInMonth;
+    i++
+  ) {
+    calendarDays.push(i);
   }
 
   return (
     <View style={styles.card}>
-      {/* TOP SECTION */}
-      <View style={styles.topSection}>
-        {/* LEFT */}
-        <View style={styles.leftSection}>
-          <Text style={styles.heading}>{headingText}</Text>
-          <Text style={styles.subheading}>
-            {daysUntilPeriod > 10
-              ? "Your body is prepping for ovulation"
-              : "Your period phase is approaching"}
-          </Text>
-        </View>
+      {/* MONTH */}
 
-        {/* RIGHT */}
-        <View style={styles.rightSection}>
-          <Text style={styles.cycleLabel}>CYCLE LENGTH</Text>
-          <Text style={styles.daysText}>{cycleLength} days</Text>
-        </View>
+      <View style={styles.monthRow}>
+        <TouchableOpacity
+          style={styles.arrowButton}
+          onPress={() => {
+            if (currentMonth === 0) {
+              setCurrentMonth(11);
+
+              setCurrentYear(
+                currentYear - 1
+              );
+            } else {
+              setCurrentMonth(
+                currentMonth - 1
+              );
+            }
+          }}
+        >
+          <Ionicons
+            name="chevron-back"
+            size={20}
+            color="#111"
+          />
+        </TouchableOpacity>
+
+        <Text style={styles.monthText}>
+          {months[currentMonth]}{" "}
+          {currentYear}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.arrowButton}
+          onPress={() => {
+            if (currentMonth === 11) {
+              setCurrentMonth(0);
+
+              setCurrentYear(
+                currentYear + 1
+              );
+            } else {
+              setCurrentMonth(
+                currentMonth + 1
+              );
+            }
+          }}
+        >
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color="#111"
+          />
+        </TouchableOpacity>
       </View>
 
-      {/* PROGRESS BAR */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBackground}>
-          {/* PERIOD PHASE (First 5 days) */}
-          <View style={styles.periodPhase} />
+      {/* WEEK DAYS */}
 
-          {/* CURRENT PROGRESS */}
-          <View
-            style={[
-              styles.progressFill,
-              {
-                width: `${progressWidth}%`,
-              },
-            ]}
-          />
-
-          {/* TODAY INDICATOR */}
-          <View
-            style={[
-              styles.todayDot,
-              {
-                left: `${Math.max(0, progressWidth - 3)}%`,
-              },
-            ]}
-          />
-        </View>
+      <View style={styles.weekRow}>
+        {weekDays.map(
+          (day, index) => (
+            <Text
+              key={index}
+              style={styles.weekDay}
+            >
+              {day}
+            </Text>
+          )
+        )}
       </View>
 
-      {/* LABELS */}
-      <View style={styles.labelsRow}>
-        <Text style={styles.sideLabel}>Day 1</Text>
-        <Text style={styles.todayLabel}>Today (Day {cycleDay})</Text>
-        <Text style={styles.sideLabel}>Day {cycleLength}</Text>
+      {/* CALENDAR */}
+
+      <View style={styles.calendarContainer}>
+        {calendarDays.map(
+          (date, index) => {
+            if (!date) {
+              return (
+                <View
+                  key={index}
+                  style={styles.dateCell}
+                />
+              );
+            }
+
+            const fullDate =
+              `${currentYear}-${String(
+                currentMonth + 1
+              ).padStart(2, "0")}-${String(
+                date
+              ).padStart(2, "0")}`;
+
+            const isPeriod =
+              isPeriodDate(
+                fullDate
+              );
+
+            return (
+              <View
+                key={index}
+                style={[
+                  styles.dateCell,
+
+                  isPeriod &&
+                    styles.periodDate,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.dateText,
+
+                    isPeriod &&
+                      styles.periodText,
+                  ]}
+                >
+                  {date}
+                </Text>
+              </View>
+            );
+          }
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "white",
-    borderRadius: 34,
-    padding: 20,
-    marginBottom: 24,
-    marginTop: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  topSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  leftSection: {
-    flex: 1,
-    paddingRight: 14,
-  },
-  heading: {
-    fontSize: 20,
-    lineHeight: 22,
-    color: "#111",
-    fontFamily: "PoppinsBold",
-  },
-  subheading: {
-    marginTop: 10,
-    fontSize: 12,
-    color: "#666",
-    fontFamily: "PoppinsRegular",
-  },
-  rightSection: {
-    alignItems: "flex-end",
-  },
-  cycleLabel: {
-    fontSize: 10,
-    letterSpacing: 1,
-    color: "#888",
-    marginBottom: 10,
-    fontFamily: "PoppinsSemiBold",
-  },
-  daysText: {
-    fontSize: 24,
-    color: "#4F46E5",
-    fontFamily: "PoppinsBold",
-  },
-  progressContainer: {
-    marginBottom: 10,
-  },
-  progressBackground: {
-    height: 20,
-    borderRadius: 8,
-    backgroundColor: "#ECE9F7",
-    overflow: "hidden",
-    position: "relative",
-  },
-  periodPhase: {
-    position: "absolute",
-    left: 0,
-    width: "18%", // ~5 days of 28 is ~18%
-    height: "100%",
-    backgroundColor: "#F8DDE6",
-  },
-  progressFill: {
-    position: "absolute",
-    left: 0,
-    height: "100%",
-    backgroundColor: "#D8D1FF",
-  },
-  todayDot: {
-    position: "absolute",
-    top: 2,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#4F46E5",
-  },
-  labelsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  loader: {
+    height: 320,
+
+    justifyContent:
+      "center",
+
     alignItems: "center",
   },
-  sideLabel: {
-    fontSize: 13,
-    color: "#777",
-    fontFamily: "PoppinsRegular",
+
+  card: {
+    backgroundColor: "#FFFFFF",
+
+    borderRadius: 32,
+
+    padding: 20,
   },
-  todayLabel: {
-    fontSize: 14,
-    color: "#4F46E5",
-    fontFamily: "PoppinsBold",
+
+  monthRow: {
+    flexDirection: "row",
+
+    justifyContent:
+      "space-between",
+
+    alignItems: "center",
+
+    marginBottom: 24,
+  },
+
+  arrowButton: {
+    width: 40,
+
+    height: 40,
+
+    borderRadius: 20,
+
+    backgroundColor: "#F5F3FF",
+
+    justifyContent:
+      "center",
+
+    alignItems: "center",
+  },
+
+  monthText: {
+    fontSize: 20,
+
+    color: "#111",
+
+    fontFamily:
+      "PoppinsBold",
+  },
+
+  weekRow: {
+    flexDirection: "row",
+
+    justifyContent:
+      "space-between",
+
+    marginBottom: 14,
+  },
+
+  weekDay: {
+    width: 42,
+
+    textAlign: "center",
+
+    color: "#999",
+
+    fontSize: 13,
+
+    fontFamily:
+      "PoppinsSemiBold",
+  },
+
+  calendarContainer: {
+    flexDirection: "row",
+
+    flexWrap: "wrap",
+
+    justifyContent:
+      "space-between",
+  },
+
+  dateCell: {
+    width: 42,
+
+    height: 42,
+
+    marginBottom: 14,
+
+    justifyContent:
+      "center",
+
+    alignItems: "center",
+  },
+
+  dateText: {
+    fontSize: 15,
+
+    color: "#111",
+
+    fontFamily:
+      "PoppinsRegular",
+  },
+
+  periodDate: {
+    backgroundColor: "#7C3AED",
+
+    borderRadius: 21,
+  },
+
+  periodText: {
+    color: "#FFFFFF",
+
+    fontFamily:
+      "PoppinsSemiBold",
   },
 });

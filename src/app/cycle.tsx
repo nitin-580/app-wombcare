@@ -7,6 +7,9 @@ import LegendRow from "./components/cycleTracker/LegendRow";
 import LogPeriodButton from "./components/cycleTracker/LogPeriodButton";
 import CycleLengthCard from "./components/cycleTracker/UpcomingPeriod";
 import PeriodTrackerCalendarCard from "./components/cycleTracker/CalenderCard";
+import PeriodTimelineGraph from "./components/cycleTracker/PeriodCycleGraph";
+import PeriodCalendar from "./components/cycleTracker/LogPeriodButton";
+import PeriodMetricsCard from "./components/cycleTracker/CycleMetric";
 
 export default function CycleScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -31,13 +34,12 @@ export default function CycleScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <PeriodTrackerCalendarCard key={`calendar-${refreshKey}`} />
+        <LogPeriodButton />
 
-        <CycleLengthCard key={`length-${refreshKey}`} />
+        <PeriodTimelineGraph />
 
-        <LegendRow />
-
-        <LogPeriodButton onLog={handleRefresh} />
+        <PeriodMetricsCard />
+        
       </ScrollView>
     </SafeAreaView>
   );

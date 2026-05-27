@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import {
   ScrollView,
   StyleSheet,
+  RefreshControl,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 import {
   SafeAreaView,
 } from "react-native-safe-area-context";
+
 
 import ClassesHeader
 from "./components/classes/ClassesHeader";
@@ -32,11 +35,41 @@ from "./components/classes/CompletedClasses";
 
 import YoutubePlayer
 from "./components/classes/YoutubePlayer";
+import WombCareChatUI from "./components/classes/ChatBubble";
+import LiveClassRoomModal from "./components/classes/LiveClassRoomModal";
 
 export default function ClassesScreen() {
+  const navigation = useNavigation();
 
   const [activeTab, setActiveTab] =
     useState("Upcoming");
+
+  const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  }, []);
+
+  // tabPress Auto-Refresh
+  useEffect(() => {
+    const parentNav = navigation.getParent();
+    if (parentNav) {
+      const unsubscribe = parentNav.addListener("tabPress", (e: any) => {
+        if (navigation.isFocused()) {
+          setRefreshing(true);
+          setTimeout(() => {
+            setRefreshing(false);
+          }, 1200);
+        }
+      });
+      return unsubscribe;
+    }
+  }, [navigation]);
 
   return (
 
@@ -45,7 +78,16 @@ export default function ClassesScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={["#FF5CA8"]}
+            tintColor="#FF5CA8"
+          />
+        }
       >
+
 
         <ClassesHeader />
 
@@ -61,30 +103,27 @@ export default function ClassesScreen() {
         {activeTab === "Upcoming" && (
 
           <>
-            <LiveClassCard />
-
-            <UpcomingClassCard />
-
-            <ChatBubble
-              sender="Dr. Sarah"
-              message="Welcome everyone 💕"
+            <LiveClassCard
+              refreshing={refreshing}
+              onPress={(liveClass) => {
+                setSelectedLiveClass({
+                  id: liveClass.id,
+                  title: liveClass.title,
+                  youtubeVideoId: liveClass.youtubeVideoId,
+                  instructorName: liveClass.instructorName,
+                  description: liveClass.description,
+                });
+                setModalVisible(true);
+              }}
             />
 
-            <ChatBubble
-              sender="Ananya"
-              message="Excited for today’s yoga class!"
-            />
+            <UpcomingClassCard refreshing={refreshing} />
 
-            <ChatBubble
-              sender="Priya"
-              message="Can this help with stress reduction?"
-            />
 
 <YoutubePlayer
   videoId="CqtlcsxK2Xw"
 />
 
-            <ChatInput />
 
           </>
 
@@ -94,11 +133,20 @@ export default function ClassesScreen() {
 
         {activeTab === "Completed" && (
 
-          <CompletedClasses />
+          <CompletedClasses refreshing={refreshing} />
 
         )}
 
       </ScrollView>
+
+      <LiveClassRoomModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setSelectedLiveClass(null);
+        }}
+        liveClass={selectedLiveClass}
+      />
 
     </SafeAreaView>
 
