@@ -128,9 +128,26 @@ export default function LoginScreen() {
         JSON.stringify(data.doctor)
       );
 
+      /* SAVE ROLE */
+
+      await AsyncStorage.setItem(
+
+        "userRole",
+
+        data.role || "user"
+      );
+
       /* NAVIGATE */
 
-      router.replace("/(tabs)");
+      if (data.role === "doctor") {
+
+        router.replace("/doctor");
+
+      } else {
+
+        router.replace("/(tabs)");
+
+      }
 
     } catch (err) {
 
