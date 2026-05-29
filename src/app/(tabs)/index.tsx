@@ -1,8 +1,11 @@
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
 } from "react-native";
+
+import {
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
 import Dashboard from "../dashboard";
 
@@ -28,7 +31,6 @@ export default function Page() {
         <FooterBrandCard
           hashtag="#goWombCare"
           title1="🌸 Built for Women"
-          title2="💜 Powered by Wellness AI"
         />
 
       </ScrollView>

@@ -57,7 +57,7 @@ export default function ClassesScreen() {
 
   // tabPress Auto-Refresh
   useEffect(() => {
-    const parentNav = navigation.getParent();
+    const parentNav: any = navigation.getParent();
     if (parentNav) {
       const unsubscribe = parentNav.addListener("tabPress", (e: any) => {
         if (navigation.isFocused()) {

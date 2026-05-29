@@ -4,8 +4,7 @@ import { useFonts } from "expo-font";
 
 import { router } from "expo-router";
 
-import AsyncStorage
-from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   View,
@@ -13,20 +12,22 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
+
+import {
+  SafeAreaView,
+} from "react-native-safe-area-context";
 
 import {
   Ionicons,
 } from "@expo/vector-icons";
 
 export default function LoginScreen() {
-
-  /* ---------------- STATES ---------------- */
 
   const [email, setEmail] =
     useState("");
@@ -40,7 +41,9 @@ export default function LoginScreen() {
   const [error, setError] =
     useState("");
 
-  /* ---------------- FONTS ---------------- */
+  const [hidePassword,
+    setHidePassword] =
+    useState(true);
 
   const [fontsLoaded] = useFonts({
 
@@ -140,13 +143,41 @@ export default function LoginScreen() {
       /* NAVIGATE */
 
       if (data.role === "doctor") {
-
         router.replace("/doctor");
-
       } else {
+        const userId = data.doctor?.id || data.doctor?._id;
+        if (!userId) {
+          router.replace("/(tabs)");
+          return;
+        }
 
-        router.replace("/(tabs)");
+        try {
+          // Check profile complete state from the live backend database
+          const profileResp = await fetch(
+            `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${data.token}`,
+              },
+            }
+          );
+          const profileData = await profileResp.json();
+          console.log("PROFILE CHECK RESPONSE:", profileData);
 
+          if (profileData.success && profileData.data && profileData.data.profileCompleted === true) {
+            router.replace("/(tabs)");
+          } else {
+            router.replace("/personalForm");
+          }
+        } catch (profileErr) {
+          console.log("PROFILE COMPLETION CHECK ERROR:", profileErr);
+          // Fall back to local check if api fails
+          if (data.doctor && data.doctor.profileCompleted === true) {
+            router.replace("/(tabs)");
+          } else {
+            router.replace("/personalForm");
+          }
+        }
       }
 
     } catch (err) {
@@ -187,48 +218,57 @@ export default function LoginScreen() {
           }}
         >
 
-          {/* TOP SECTION */}
+          {/* TOP */}
 
-          <View style={styles.topSection}>
+          {/* CARD */}
 
-            <View style={styles.logoCircle}>
+          <View style={styles.card}>
 
-              <Ionicons
-                name="heart"
-                size={30}
-                color="#FF4D8D"
-              />
+            {/* TABS */}
+
+            <View style={styles.tabsContainer}>
+
+              <TouchableOpacity
+                style={styles.activeTab}
+              >
+                <Text style={styles.activeTabText}>
+                  Log in
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() =>
+                  router.push("/(auth)/signup")
+                }
+              >
+                <Text style={styles.inactiveTabText}>
+                  Sign up
+                </Text>
+              </TouchableOpacity>
 
             </View>
+
+            <View style={styles.topSection}>
+
+            <Image
+              source={require("../../../assets/images/icon.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
 
             <Text style={styles.logo}>
               WombCare
             </Text>
 
-            <Text style={styles.tagline}>
-              AI Powered Women’s Health
-            </Text>
-
           </View>
 
-          {/* LOGIN CARD */}
-
-          <View style={styles.card}>
-
-            <Text style={styles.title}>
-              Welcome Back
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Sign in to continue your wellness journey
-            </Text>
 
             {/* EMAIL */}
 
             <View style={styles.inputContainer}>
 
               <Text style={styles.label}>
-                Email
+                Your Email
               </Text>
 
               <TextInput
@@ -262,11 +302,13 @@ export default function LoginScreen() {
 
                 <TextInput
 
-                  placeholder="********"
+                  placeholder="••••••••"
 
                   placeholderTextColor="#999"
 
-                  secureTextEntry
+                  secureTextEntry={
+                    hidePassword
+                  }
 
                   style={styles.passwordInput}
 
@@ -275,32 +317,29 @@ export default function LoginScreen() {
                   onChangeText={setPassword}
                 />
 
-                <Ionicons
-                  name="eye-off-outline"
-                  size={22}
-                  color="#999"
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setHidePassword(
+                      !hidePassword
+                    )
+                  }
+                >
+
+                  <Ionicons
+                    name={
+                      hidePassword
+                        ? "eye-off-outline"
+                        : "eye-outline"
+                    }
+                    size={22}
+                    color="#999"
+                  />
+
+                </TouchableOpacity>
 
               </View>
 
             </View>
-
-            {/* FORGOT PASSWORD */}
-
-            <TouchableOpacity
-
-              onPress={() =>
-                router.push(
-                  "/(auth)/forgot-password"
-                )
-              }
-            >
-
-              <Text style={styles.forgotPassword}>
-                Forgot Password?
-              </Text>
-
-            </TouchableOpacity>
 
             {/* ERROR */}
 
@@ -312,7 +351,24 @@ export default function LoginScreen() {
 
             ) : null}
 
-            {/* LOGIN BUTTON */}
+            {/* FORGOT */}
+
+            <TouchableOpacity
+
+              onPress={() =>
+                router.push(
+                  "/(auth)/forgot-password"
+                )
+              }
+            >
+
+              <Text style={styles.forgotPassword}>
+                Forgot password?
+              </Text>
+
+            </TouchableOpacity>
+
+            {/* BUTTON */}
 
             <TouchableOpacity
 
@@ -332,77 +388,19 @@ export default function LoginScreen() {
               ) : (
 
                 <Text style={styles.buttonText}>
-                  Sign In
+                  Continue
                 </Text>
 
               )}
 
             </TouchableOpacity>
 
-            {/* DIVIDER */}
-
-            <View style={styles.dividerContainer}>
-
-              <View style={styles.divider} />
-
-              <Text style={styles.dividerText}>
-                or continue with
-              </Text>
-
-              <View style={styles.divider} />
-
-            </View>
-
-            {/* SOCIAL BUTTONS */}
-
-            <View style={styles.socialContainer}>
-
-              {/* GOOGLE */}
-
-              <TouchableOpacity
-                style={styles.socialButton}
-              >
-
-                <Ionicons
-                  name="logo-google"
-                  size={22}
-                  color="#EA4335"
-                />
-
-                <Text style={styles.socialText}>
-                  Google
-                </Text>
-
-              </TouchableOpacity>
-
-              {/* APPLE */}
-
-              <TouchableOpacity
-                style={styles.socialButton}
-              >
-
-                <Ionicons
-                  name="logo-apple"
-                  size={22}
-                  color="#111"
-                />
-
-                <Text style={styles.socialText}>
-                  Apple
-                </Text>
-
-              </TouchableOpacity>
-
-            </View>
-
-            {/* SIGNUP */}
+            {/* FOOTER */}
 
             <TouchableOpacity
 
               onPress={() =>
-                router.push(
-                  "/(auth)/signup"
-                )
+                router.push("/(auth)/signup")
               }
             >
 
@@ -432,293 +430,156 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F7E8EC",
+    backgroundColor: "#F5F5F5",
   },
 
   topSection: {
-
-    height: 240,
-
-    justifyContent: "center",
-
     alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 10,
   },
 
-  logoCircle: {
-
+  logoImage: {
     width: 70,
     height: 70,
-
-    borderRadius: 35,
-
-    backgroundColor: "white",
-
-    justifyContent: "center",
-
-    alignItems: "center",
-
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 5,
+    marginBottom: 4,
   },
 
   logo: {
-
-    fontSize: 38,
-
-    color: "#FF4D8D",
-
-    marginTop: 16,
-
-    fontFamily: "PoppinsBold",
+    fontSize: 14,
+    color: "#6B8DE3",
+    fontFamily: "PoppinsRegular",
   },
 
   tagline: {
-
-    marginTop: 8,
-
-    color: "#777",
-
-    fontSize: 15,
-
+    marginTop: 2,
+    color: "#A0A0A0",
+    fontSize: 11,
     fontFamily: "PoppinsRegular",
   },
 
   card: {
-
     flex: 1,
-
     backgroundColor: "white",
-
-    borderTopLeftRadius: 40,
-
-    borderTopRightRadius: 40,
-
-    paddingHorizontal: 24,
-
-    paddingTop: 36,
-
-    paddingBottom: 40,
-
-    minHeight: 700,
+    borderTopLeftRadius: 38,
+    borderTopRightRadius: 38,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 30,
+    marginTop: 8,
   },
 
-  title: {
+  tabsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 45,
+    marginBottom: 38,
+  },
 
-    fontSize: 32,
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#6B8DE3",
+    paddingBottom: 8,
+    minWidth: 90,
+    alignItems: "center",
+  },
 
-    color: "#111",
-
+  activeTabText: {
+    fontSize: 17,
+    color: "#6B8DE3",
     fontFamily: "PoppinsBold",
   },
 
-  subtitle: {
-
-    fontSize: 15,
-
-    color: "#777",
-
-    marginTop: 8,
-
-    marginBottom: 28,
-
-    lineHeight: 24,
-
-    fontFamily: "PoppinsRegular",
+  inactiveTabText: {
+    fontSize: 17,
+    color: "#D2D2D2",
+    fontFamily: "PoppinsBold",
   },
 
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 18,
   },
 
   label: {
-
     fontSize: 14,
-
-    marginBottom: 8,
-
-    color: "#555",
-
-    fontFamily: "PoppinsRegular",
+    marginBottom: 10,
+    color: "#222",
+    fontFamily: "PoppinsSemiBold",
   },
 
   input: {
-
     height: 58,
-
     borderWidth: 1,
-
-    borderColor: "#EEE",
-
+    borderColor: "#DCDCDC",
     borderRadius: 18,
-
     paddingHorizontal: 18,
-
     fontSize: 15,
-
-    backgroundColor: "#FAFAFA",
-
+    backgroundColor: "#FFF",
     fontFamily: "PoppinsRegular",
+    color: "#333",
   },
 
   passwordContainer: {
-
     height: 58,
-
     borderWidth: 1,
-
-    borderColor: "#EEE",
-
+    borderColor: "#DCDCDC",
     borderRadius: 18,
-
-    backgroundColor: "#FAFAFA",
-
     paddingHorizontal: 18,
-
     flexDirection: "row",
-
     alignItems: "center",
-
     justifyContent: "space-between",
+    backgroundColor: "#FFF",
   },
 
   passwordInput: {
-
     flex: 1,
-
     fontSize: 15,
-
+    color: "#333",
     fontFamily: "PoppinsRegular",
   },
 
   forgotPassword: {
-
     textAlign: "right",
-
-    color: "#FF4D8D",
-
+    color: "#6B8DE3",
+    marginTop: 2,
     marginBottom: 24,
-
+    fontSize: 14,
     fontFamily: "PoppinsSemiBold",
   },
 
   error: {
-
-    color: "#FF4D6D",
-
-    marginBottom: 18,
-
+    color: "#FF6B6B",
+    marginBottom: 10,
+    fontSize: 13,
     textAlign: "center",
-
     fontFamily: "PoppinsMedium",
   },
 
   button: {
-
-    height: 60,
-
-    backgroundColor: "#111",
-
-    borderRadius: 30,
-
+    height: 58,
+    backgroundColor: "#6B8DE3",
+    borderRadius: 18,
     justifyContent: "center",
-
     alignItems: "center",
+    marginTop: 2,
   },
 
   buttonText: {
-
     color: "white",
-
-    fontSize: 18,
-
-    fontFamily: "PoppinsSemiBold",
-  },
-
-  dividerContainer: {
-
-    flexDirection: "row",
-
-    alignItems: "center",
-
-    marginVertical: 32,
-  },
-
-  divider: {
-
-    flex: 1,
-
-    height: 1,
-
-    backgroundColor: "#EEE",
-  },
-
-  dividerText: {
-
-    marginHorizontal: 12,
-
-    color: "#999",
-
-    fontSize: 13,
-
-    fontFamily: "PoppinsRegular",
-  },
-
-  socialContainer: {
-
-    flexDirection: "row",
-
-    justifyContent: "space-between",
-
-    gap: 14,
-  },
-
-  socialButton: {
-
-    flex: 1,
-
-    height: 58,
-
-    borderWidth: 1,
-
-    borderColor: "#EEE",
-
-    borderRadius: 18,
-
-    flexDirection: "row",
-
-    justifyContent: "center",
-
-    alignItems: "center",
-  },
-
-  socialText: {
-
-    marginLeft: 10,
-
-    fontSize: 15,
-
-    color: "#111",
-
+    fontSize: 17,
     fontFamily: "PoppinsSemiBold",
   },
 
   footerText: {
-
-    marginTop: 32,
-
+    marginTop: 36,
     textAlign: "center",
-
-    color: "#777",
-
+    color: "#9A9A9A",
+    fontSize: 14,
     fontFamily: "PoppinsRegular",
   },
 
   signupText: {
-
-    color: "#FF4D8D",
-
+    color: "#6B8DE3",
     fontFamily: "PoppinsSemiBold",
   },
 

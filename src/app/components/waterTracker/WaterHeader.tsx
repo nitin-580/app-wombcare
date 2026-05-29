@@ -39,8 +39,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   container: {
-    marginTop: 30,
+    marginTop: 20,
     marginBottom: 20,
+    paddingLeft: 20
   },
   title: {
     fontSize: 32,

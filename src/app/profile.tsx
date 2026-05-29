@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
@@ -13,12 +12,20 @@ import {
   Modal,
   TextInput,
   Alert,
+  Platform,
 } from "react-native";
+
+import {
+  SafeAreaView,
+} from "react-native-safe-area-context";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
+import { supabase } from "./services/supabaseClient";
 
 // 6 Gorgeous Curated Feminine Avatars
 const PRESET_AVATARS = [
@@ -42,6 +49,95 @@ export default function ProfileScreen() {
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>("1");
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string>("");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Select and Upload photo using expo-image-picker and Supabase Storage
+  const handleSelectAndUploadPhoto = async () => {
+    try {
+      // 1. Request Media Library Permissions
+      if (Platform.OS !== "web") {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission Denied", "We need access to your photos to upload a profile picture.");
+          return;
+        }
+      }
+
+      // 2. Launch Image Picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const selectedImage = result.assets[0];
+      setUploadingPhoto(true);
+
+      // 3. Convert image to ArrayBuffer for Supabase Upload
+      const response = await fetch(selectedImage.uri);
+      const blob = await response.blob();
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      // 4. Set unique file path
+      const fileExt = selectedImage.uri.split(".").pop() || "jpg";
+      const fileName = `${userId}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // 5. Upload file to Supabase Bucket 'avatars'
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, arrayBuffer, {
+          contentType: selectedImage.mimeType || "image/jpeg",
+          upsert: true,
+        });
+
+      if (error) {
+        console.error("Supabase Storage Error:", error);
+        Alert.alert("Upload Failed", error.message || "Could not upload image to Supabase.");
+        return;
+      }
+
+      // 6. Get Public URL
+      const { data: urlData } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // 7. Save to local state and AsyncStorage
+      setAvatarUri(publicUrl);
+      await AsyncStorage.setItem(`profile_avatar_${userId}`, publicUrl);
+      
+      // Update backend user profile if possible
+      const token = await AsyncStorage.getItem("userToken");
+      await fetch(
+        `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            avatarUrl: publicUrl
+          })
+        }
+      );
+
+      Alert.alert("Success", "Profile photo uploaded to Supabase and updated successfully! 🌸");
+      setIsPhotoModalOpen(false);
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      Alert.alert("Upload Error", err.message || "An unexpected error occurred during photo upload.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   // Fonts loading
   const [fontsLoaded] = useFonts({
@@ -151,6 +247,7 @@ export default function ProfileScreen() {
               setLoggingOut(true);
               await AsyncStorage.removeItem("userToken");
               await AsyncStorage.removeItem("userData");
+              await AsyncStorage.removeItem("userRole");
               router.replace("/(auth)");
             } catch (err) {
               console.log("Logout error:", err);
@@ -315,6 +412,23 @@ export default function ProfileScreen() {
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
+
+            {/* Supabase Storage File Upload Option */}
+            <Text style={styles.modalLabel}>Upload from Device (Supabase) ☁️:</Text>
+            <TouchableOpacity 
+              style={styles.supabaseUploadBtn} 
+              onPress={handleSelectAndUploadPhoto}
+              disabled={uploadingPhoto}
+            >
+              {uploadingPhoto ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload" size={20} color="white" />
+                  <Text style={styles.supabaseUploadText}>Choose Photo & Upload</Text>
+                </>
+              )}
+            </TouchableOpacity>
 
             {/* Presets Grid */}
             <Text style={styles.modalLabel}>Choose a lovely preset avatar:</Text>
@@ -644,6 +758,26 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   saveAvatarText: {
+    color: "white",
+    fontSize: 14,
+    fontFamily: "PoppinsBold",
+  },
+  supabaseUploadBtn: {
+    backgroundColor: "#FF5CA8",
+    borderRadius: 16,
+    height: 52,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+    shadowColor: "#FF5CA8",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  supabaseUploadText: {
     color: "white",
     fontSize: 14,
     fontFamily: "PoppinsBold",

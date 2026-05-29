@@ -15,6 +15,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 
 import {
@@ -22,8 +23,6 @@ import {
 } from "@expo/vector-icons";
 
 export default function ForgotPasswordScreen() {
-
-  /* ---------------- STATES ---------------- */
 
   const [step, setStep] =
     useState<
@@ -51,8 +50,6 @@ export default function ForgotPasswordScreen() {
   const [isLoading,
     setIsLoading] =
     useState(false);
-
-  /* ---------------- FONTS ---------------- */
 
   const [fontsLoaded] = useFonts({
 
@@ -102,8 +99,6 @@ export default function ForgotPasswordScreen() {
       const data =
         await response.json();
 
-      console.log(data);
-
       if (!response.ok) {
 
         setError(
@@ -117,8 +112,6 @@ export default function ForgotPasswordScreen() {
       setStep("otp");
 
     } catch (err: any) {
-
-      console.log(err);
 
       setError(
         err.message ||
@@ -166,8 +159,6 @@ export default function ForgotPasswordScreen() {
       const data =
         await response.json();
 
-      console.log(data);
-
       if (!response.ok) {
 
         setError(
@@ -181,8 +172,6 @@ export default function ForgotPasswordScreen() {
       setStep("reset");
 
     } catch (err: any) {
-
-      console.log(err);
 
       setError(
         err.message ||
@@ -235,8 +224,6 @@ export default function ForgotPasswordScreen() {
       const data =
         await response.json();
 
-      console.log(data);
-
       if (!response.ok) {
 
         setError(
@@ -259,8 +246,6 @@ export default function ForgotPasswordScreen() {
 
     } catch (err: any) {
 
-      console.log(err);
-
       setError(
         err.message ||
         "Password reset failed"
@@ -271,8 +256,6 @@ export default function ForgotPasswordScreen() {
       setIsLoading(false);
     }
   };
-
-  /* ---------------- UI ---------------- */
 
   return (
 
@@ -313,15 +296,11 @@ export default function ForgotPasswordScreen() {
 
               <Ionicons
                 name="arrow-back"
-                size={24}
+                size={22}
                 color="#111"
               />
 
             </TouchableOpacity>
-
-            <Text style={styles.logo}>
-              WombCare
-            </Text>
 
           </View>
 
@@ -453,7 +432,7 @@ export default function ForgotPasswordScreen() {
 
                     onChangeText={(text) =>
                       setOtp(
-                        text.replace(/\D/g, "")
+                        text.replace(/\\D/g, "")
                       )
                     }
                   />
@@ -512,7 +491,7 @@ export default function ForgotPasswordScreen() {
 
                   <TextInput
 
-                    placeholder="********"
+                    placeholder="••••••••"
 
                     placeholderTextColor="#999"
 
@@ -595,203 +574,157 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F7E8EC",
+    backgroundColor: "#F5F5F5",
   },
 
   topSection: {
-
-    height: 220,
-
-    justifyContent: "center",
-
     alignItems: "center",
-
+    paddingTop: 10,
+    paddingBottom: 10,
     position: "relative",
   },
 
   backButton: {
-
     position: "absolute",
+    top: 10,
+    left: 22,
 
-    top: 60,
+    width: 42,
+    height: 42,
 
-    left: 24,
-
-    width: 46,
-    height: 46,
-
-    borderRadius: 23,
+    borderRadius: 21,
 
     backgroundColor: "white",
 
     justifyContent: "center",
-
     alignItems: "center",
 
     shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  logoImage: {
+    width: 70,
+    height: 70,
+    marginBottom: 4,
   },
 
   logo: {
-
-    fontSize: 40,
-
-    color: "#FF4D8D",
-
+    fontSize: 22,
+    color: "#6B8DE3",
     fontFamily: "PoppinsBold",
   },
 
+  tagline: {
+    marginTop: 2,
+    color: "#A0A0A0",
+    fontSize: 11,
+    fontFamily: "PoppinsRegular",
+  },
+
   card: {
-
     flex: 1,
-
     backgroundColor: "white",
 
-    borderTopLeftRadius: 40,
+    borderTopLeftRadius: 38,
+    borderTopRightRadius: 38,
 
-    borderTopRightRadius: 40,
+    paddingHorizontal: 28,
+    paddingTop: 32,
+    paddingBottom: 30,
 
-    paddingHorizontal: 24,
-
-    paddingTop: 36,
-
-    paddingBottom: 40,
-
-    minHeight: 650,
+    marginTop: 12,
   },
 
   title: {
-
-    fontSize: 32,
-
+    fontSize: 22,
     color: "#111",
-
     fontFamily: "PoppinsBold",
   },
 
   subtitle: {
-
-    fontSize: 15,
-
-    color: "#777",
-
-    marginTop: 12,
-
-    marginBottom: 30,
-
-    lineHeight: 24,
-
+    fontSize: 13,
+    color: "#888",
+    marginTop: 8,
+    marginBottom: 28,
+    lineHeight: 22,
     fontFamily: "PoppinsRegular",
   },
 
   inputContainer: {
-    marginBottom: 22,
+    marginBottom: 18,
   },
 
   label: {
-
     fontSize: 14,
-
-    marginBottom: 8,
-
-    color: "#555",
-
-    fontFamily: "PoppinsRegular",
+    marginBottom: 10,
+    color: "#222",
+    fontFamily: "PoppinsSemiBold",
   },
 
   input: {
-
-    height: 58,
-
+    height: 56,
     borderWidth: 1,
-
-    borderColor: "#EEE",
-
+    borderColor: "#DCDCDC",
     borderRadius: 18,
-
     paddingHorizontal: 18,
-
     fontSize: 15,
-
-    backgroundColor: "#FAFAFA",
-
+    backgroundColor: "#FFF",
     fontFamily: "PoppinsRegular",
+    color: "#333",
   },
 
   button: {
-
-    height: 60,
-
-    backgroundColor: "#111",
-
-    borderRadius: 30,
-
+    height: 58,
+    backgroundColor: "#6B8DE3",
+    borderRadius: 18,
     justifyContent: "center",
-
     alignItems: "center",
-
-    marginTop: 10,
+    marginTop: 8,
   },
 
   buttonText: {
-
     color: "white",
-
-    fontSize: 18,
-
+    fontSize: 17,
     fontFamily: "PoppinsSemiBold",
   },
 
   footerText: {
-
-    marginTop: 28,
-
+    marginTop: 34,
     textAlign: "center",
-
-    color: "#777",
-
+    color: "#999",
+    fontSize: 14,
     fontFamily: "PoppinsRegular",
   },
 
   loginText: {
-
-    color: "#FF4D8D",
-
+    color: "#6B8DE3",
     fontFamily: "PoppinsSemiBold",
   },
 
   resendText: {
-
-    marginTop: 22,
-
+    marginTop: 20,
     textAlign: "center",
-
-    color: "#5B4CF0",
-
+    color: "#6B8DE3",
+    fontSize: 14,
     fontFamily: "PoppinsSemiBold",
   },
 
   error: {
-
-    color: "#FF4D6D",
-
-    marginBottom: 16,
-
+    color: "#FF6B6B",
+    marginBottom: 12,
     textAlign: "center",
-
+    fontSize: 13,
     fontFamily: "PoppinsMedium",
   },
 
   success: {
-
     color: "#1FA971",
-
-    marginBottom: 16,
-
+    marginBottom: 12,
     textAlign: "center",
-
+    fontSize: 13,
     fontFamily: "PoppinsMedium",
   },
 

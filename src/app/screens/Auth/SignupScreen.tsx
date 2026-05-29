@@ -4,10 +4,7 @@ import { useFonts } from "expo-font";
 
 import { router } from "expo-router";
 
-import OnboardingScreen from "@/app/personalForm";
-
-import AsyncStorage
-from "@react-native-async-storage/async-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   View,
@@ -19,16 +16,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from "react-native";
 
 import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 
+import {
+  Ionicons,
+} from "@expo/vector-icons";
 
 export default function SignupScreen() {
-
-  /* ---------------- STATES ---------------- */
 
   const [name, setName] =
     useState("");
@@ -46,6 +45,14 @@ export default function SignupScreen() {
     setConfirmPassword] =
     useState("");
 
+  const [hidePassword,
+    setHidePassword] =
+    useState(true);
+
+  const [hideConfirmPassword,
+    setHideConfirmPassword] =
+    useState(true);
+
   const [error, setError] =
     useState("");
 
@@ -54,8 +61,6 @@ export default function SignupScreen() {
 
   const [isLoading, setIsLoading] =
     useState(false);
-
-  /* ---------------- FONTS ---------------- */
 
   const [fontsLoaded] = useFonts({
 
@@ -84,11 +89,35 @@ export default function SignupScreen() {
       setSuccess("");
 
       if (
+        !name ||
+        !email ||
+        !phone ||
+        !password ||
+        !confirmPassword
+      ) {
+
+        setError(
+          "Please fill all fields"
+        );
+
+        return;
+      }
+
+      if (
         password !== confirmPassword
       ) {
 
         setError(
           "Passwords do not match"
+        );
+
+        return;
+      }
+
+      if (password.length < 6) {
+
+        setError(
+          "Password should be at least 6 characters"
         );
 
         return;
@@ -149,7 +178,7 @@ export default function SignupScreen() {
         return;
       }
 
-      /* SAVE USER */
+      /* SAVE TOKEN */
 
       if (data.token) {
 
@@ -158,6 +187,8 @@ export default function SignupScreen() {
           data.token
         );
       }
+
+      /* SAVE USER */
 
       if (data.doctor) {
 
@@ -170,6 +201,13 @@ export default function SignupScreen() {
           )
         );
       }
+
+      /* SAVE ROLE */
+
+      await AsyncStorage.setItem(
+        "userRole",
+        data.role || "user"
+      );
 
       setSuccess(
         "Account created successfully!"
@@ -220,29 +258,51 @@ export default function SignupScreen() {
           }}
         >
 
-          {/* TOP */}
-
-          <View style={styles.topSection}>
-
-            <Text style={styles.logo}>
-              WombCare
-            </Text>
-
-          </View>
-
           {/* CARD */}
 
           <View style={styles.card}>
 
-            <Text style={styles.title}>
-              Sign up
-            </Text>
+            {/* TABS */}
 
-            <Text style={styles.subtitle}>
-              Create your healthcare account
-            </Text>
+            <View style={styles.tabsContainer}>
 
-            {/* FULL NAME */}
+              <TouchableOpacity
+                onPress={() =>
+                  router.push("/(auth)")
+                }
+              >
+                <Text style={styles.inactiveTabText}>
+                  Log in
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.activeTab}
+              >
+                <Text style={styles.activeTabText}>
+                  Sign up
+                </Text>
+              </TouchableOpacity>
+
+            </View>
+
+            {/* LOGO */}
+
+            <View style={styles.topSection}>
+
+              <Image
+                source={require("../../../assets/images/icon.png")}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+
+              <Text style={styles.logo}>
+                WombCare
+              </Text>
+
+            </View>
+
+            {/* NAME */}
 
             <View style={styles.inputContainer}>
 
@@ -295,7 +355,7 @@ export default function SignupScreen() {
             <View style={styles.inputContainer}>
 
               <Text style={styles.label}>
-                Email
+                Your Email
               </Text>
 
               <TextInput
@@ -323,20 +383,46 @@ export default function SignupScreen() {
                 Password
               </Text>
 
-              <TextInput
+              <View style={styles.passwordContainer}>
 
-                placeholder="********"
+                <TextInput
 
-                placeholderTextColor="#999"
+                  placeholder="••••••••"
 
-                secureTextEntry
+                  placeholderTextColor="#999"
 
-                style={styles.input}
+                  secureTextEntry={
+                    hidePassword
+                  }
 
-                value={password}
+                  style={styles.passwordInput}
 
-                onChangeText={setPassword}
-              />
+                  value={password}
+
+                  onChangeText={setPassword}
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setHidePassword(
+                      !hidePassword
+                    )
+                  }
+                >
+
+                  <Ionicons
+                    name={
+                      hidePassword
+                        ? "eye-off-outline"
+                        : "eye-outline"
+                    }
+                    size={22}
+                    color="#999"
+                  />
+
+                </TouchableOpacity>
+
+              </View>
 
             </View>
 
@@ -348,22 +434,48 @@ export default function SignupScreen() {
                 Confirm Password
               </Text>
 
-              <TextInput
+              <View style={styles.passwordContainer}>
 
-                placeholder="********"
+                <TextInput
 
-                placeholderTextColor="#999"
+                  placeholder="••••••••"
 
-                secureTextEntry
+                  placeholderTextColor="#999"
 
-                style={styles.input}
+                  secureTextEntry={
+                    hideConfirmPassword
+                  }
 
-                value={confirmPassword}
+                  style={styles.passwordInput}
 
-                onChangeText={
-                  setConfirmPassword
-                }
-              />
+                  value={confirmPassword}
+
+                  onChangeText={
+                    setConfirmPassword
+                  }
+                />
+
+                <TouchableOpacity
+                  onPress={() =>
+                    setHideConfirmPassword(
+                      !hideConfirmPassword
+                    )
+                  }
+                >
+
+                  <Ionicons
+                    name={
+                      hideConfirmPassword
+                        ? "eye-off-outline"
+                        : "eye-outline"
+                    }
+                    size={22}
+                    color="#999"
+                  />
+
+                </TouchableOpacity>
+
+              </View>
 
             </View>
 
@@ -387,7 +499,7 @@ export default function SignupScreen() {
 
             ) : null}
 
-            {/* SIGNUP BUTTON */}
+            {/* BUTTON */}
 
             <TouchableOpacity
 
@@ -407,14 +519,14 @@ export default function SignupScreen() {
               ) : (
 
                 <Text style={styles.buttonText}>
-                  Create Account
+                  Continue
                 </Text>
 
               )}
 
             </TouchableOpacity>
 
-            {/* LOGIN */}
+            {/* FOOTER */}
 
             <TouchableOpacity
 
@@ -428,7 +540,7 @@ export default function SignupScreen() {
                 Already have an account?
 
                 <Text style={styles.signupText}>
-                  {" "}Sign in
+                  {" "}Log in
                 </Text>
 
               </Text>
@@ -449,163 +561,154 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F7E8EC",
+    backgroundColor: "#F5F5F5",
   },
 
   topSection: {
-
-    height: 220,
-
-    justifyContent: "center",
-
     alignItems: "center",
+    paddingBottom: 24,
+  },
+
+  logoImage: {
+    width: 70,
+    height: 70,
+    marginBottom: 4,
   },
 
   logo: {
+    fontSize: 14,
+    color: "#6B8DE3",
+    fontFamily: "PoppinsRegular",
+  },
 
-    fontSize: 40,
-
-    color: "#FF4D8D",
-
-    fontFamily: "PoppinsBold",
+  tagline: {
+    marginTop: 2,
+    color: "#A0A0A0",
+    fontSize: 11,
+    fontFamily: "PoppinsRegular",
   },
 
   card: {
-
     flex: 1,
-
     backgroundColor: "white",
-
-    borderTopLeftRadius: 40,
-
-    borderTopRightRadius: 40,
-
-    paddingHorizontal: 24,
-
-    paddingTop: 36,
-
-    paddingBottom: 40,
-
-    minHeight: 760,
+    borderTopLeftRadius: 38,
+    borderTopRightRadius: 38,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 30,
+    marginTop: 8,
   },
 
-  title: {
+  tabsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 45,
+    marginBottom: 28,
+  },
 
-    fontSize: 34,
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#6B8DE3",
+    paddingBottom: 8,
+    minWidth: 90,
+    alignItems: "center",
+  },
 
-    color: "#111",
-
+  activeTabText: {
+    fontSize: 17,
+    color: "#6B8DE3",
     fontFamily: "PoppinsBold",
   },
 
-  subtitle: {
-
-    fontSize: 15,
-
-    color: "#777",
-
-    marginTop: 8,
-
-    marginBottom: 28,
-
-    fontFamily: "PoppinsRegular",
+  inactiveTabText: {
+    fontSize: 17,
+    color: "#D2D2D2",
+    fontFamily: "PoppinsBold",
   },
 
   inputContainer: {
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   label: {
-
     fontSize: 14,
-
-    marginBottom: 8,
-
-    color: "#555",
-
-    fontFamily: "PoppinsRegular",
+    marginBottom: 10,
+    color: "#222",
+    fontFamily: "PoppinsSemiBold",
   },
 
   input: {
-
-    height: 58,
-
+    height: 56,
     borderWidth: 1,
-
-    borderColor: "#EEE",
-
+    borderColor: "#DCDCDC",
     borderRadius: 18,
-
     paddingHorizontal: 18,
-
     fontSize: 15,
+    backgroundColor: "#FFF",
+    fontFamily: "PoppinsRegular",
+    color: "#333",
+  },
 
-    backgroundColor: "#FAFAFA",
+  passwordContainer: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: "#DCDCDC",
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFF",
+  },
 
+  passwordInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#333",
     fontFamily: "PoppinsRegular",
   },
 
   button: {
-
-    height: 60,
-
-    backgroundColor: "#111",
-
-    borderRadius: 30,
-
+    height: 58,
+    backgroundColor: "#6B8DE3",
+    borderRadius: 18,
     justifyContent: "center",
-
     alignItems: "center",
-
-    marginTop: 12,
+    marginTop: 10,
   },
 
   buttonText: {
-
     color: "white",
-
-    fontSize: 18,
-
+    fontSize: 17,
     fontFamily: "PoppinsSemiBold",
   },
 
   footerText: {
-
-    marginTop: 28,
-
+    marginTop: 34,
     textAlign: "center",
-
-    color: "#777",
-
+    color: "#999",
+    fontSize: 14,
     fontFamily: "PoppinsRegular",
   },
 
   signupText: {
-
-    color: "#FF4D8D",
-
+    color: "#6B8DE3",
     fontFamily: "PoppinsSemiBold",
   },
 
   error: {
-
-    color: "#FF4D6D",
-
+    color: "#FF6B6B",
+    marginBottom: 10,
+    fontSize: 13,
     textAlign: "center",
-
-    marginBottom: 14,
-
     fontFamily: "PoppinsMedium",
   },
 
   success: {
-
     color: "#1FA971",
-
+    marginBottom: 10,
+    fontSize: 13,
     textAlign: "center",
-
-    marginBottom: 14,
-
     fontFamily: "PoppinsMedium",
   },
 

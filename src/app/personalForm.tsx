@@ -8,13 +8,17 @@ import React, {
     StyleSheet,
     TextInput,
     TouchableOpacity,
-    SafeAreaView,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
   } from "react-native";
   
+
+  import {
+    SafeAreaView,
+  } from "react-native-safe-area-context";
+
   import AsyncStorage
   from "@react-native-async-storage/async-storage";
   
@@ -464,9 +468,6 @@ async () => {
   
             <View style={styles.topSection}>
   
-              <Text style={styles.logo}>
-                WombCare
-              </Text>
   
               <Text style={styles.stepText}>
                 Step {step} of {totalSteps}
@@ -915,136 +916,138 @@ async () => {
   }
   
   const styles = StyleSheet.create({
-  
+
     container: {
       flex: 1,
-      backgroundColor: "#F8F4FF",
+      backgroundColor: "#F5F5F5",
     },
   
     topSection: {
-      paddingTop: 70,
-      paddingHorizontal: 24,
-      paddingBottom: 30,
+      paddingTop: 24,
+      paddingHorizontal: 28,
+      paddingBottom: 18,
     },
   
     logo: {
-      fontSize: 42,
-      color: "#FF4D8D",
+      fontSize: 24,
+      color: "#6B8DE3",
       fontFamily: "PoppinsBold",
     },
   
     stepText: {
-      marginTop: 18,
-      fontSize: 13,
-      color: "#FF4D8D",
+      marginTop: 16,
+      fontSize: 12,
+      color: "#6B8DE3",
       fontFamily: "PoppinsSemiBold",
     },
   
     headerTitle: {
-      marginTop: 12,
-      fontSize: 34,
+      marginTop: 10,
+      fontSize: 28,
       color: "#111",
       fontFamily: "PoppinsBold",
     },
   
     headerSubtitle: {
-      marginTop: 10,
-      fontSize: 15,
-      color: "#666",
-      lineHeight: 26,
+      marginTop: 6,
+      fontSize: 13,
+      color: "#888",
+      lineHeight: 22,
       fontFamily: "PoppinsRegular",
     },
   
     progressBar: {
-      height: 10,
-      backgroundColor: "#F1EAFE",
+      height: 8,
+      backgroundColor: "#EAEAEA",
       borderRadius: 999,
-      marginTop: 28,
+      marginTop: 20,
       overflow: "hidden",
     },
   
     progressFill: {
       height: "100%",
-      backgroundColor: "#FF4D8D",
+      backgroundColor: "#6B8DE3",
       borderRadius: 999,
     },
   
     card: {
       backgroundColor: "white",
-      marginHorizontal: 20,
+      marginHorizontal: 18,
       borderRadius: 34,
       padding: 24,
       marginBottom: 40,
     },
   
     sectionTitle: {
-      fontSize: 28,
+      fontSize: 22,
       color: "#111",
-      marginBottom: 26,
+      marginBottom: 22,
       fontFamily: "PoppinsBold",
     },
   
     inputContainer: {
-      marginBottom: 20,
+      marginBottom: 16,
     },
   
     label: {
       fontSize: 14,
-      color: "#555",
+      color: "#222",
       marginBottom: 10,
-      fontFamily: "PoppinsMedium",
+      fontFamily: "PoppinsSemiBold",
     },
   
     input: {
-      height: 58,
+      height: 56,
       borderRadius: 18,
-      backgroundColor: "#FAFAFA",
+      backgroundColor: "#FFF",
       borderWidth: 1,
-      borderColor: "#EEE",
+      borderColor: "#DCDCDC",
       paddingHorizontal: 18,
       fontSize: 15,
+      color: "#333",
       fontFamily: "PoppinsRegular",
     },
   
     textArea: {
-      minHeight: 120,
+      minHeight: 110,
       borderRadius: 18,
-      backgroundColor: "#FAFAFA",
+      backgroundColor: "#FFF",
       borderWidth: 1,
-      borderColor: "#EEE",
+      borderColor: "#DCDCDC",
       paddingHorizontal: 18,
-      paddingTop: 18,
+      paddingTop: 16,
       fontSize: 15,
+      color: "#333",
       fontFamily: "PoppinsRegular",
     },
   
     row: {
       flexDirection: "row",
       gap: 12,
-      marginBottom: 18,
+      marginBottom: 16,
     },
   
     optionsRow: {
-      gap: 14,
+      gap: 12,
     },
   
     optionButton: {
       padding: 18,
-      borderRadius: 22,
+      borderRadius: 20,
       backgroundColor: "#FAFAFA",
       borderWidth: 1,
-      borderColor: "#EEE",
-      marginBottom: 14,
+      borderColor: "#E4E4E4",
+      marginBottom: 12,
     },
   
     activeOptionButton: {
-      backgroundColor: "#111",
-      borderColor: "#111",
+      backgroundColor: "#6B8DE3",
+      borderColor: "#6B8DE3",
     },
   
     optionText: {
       color: "#555",
-      fontSize: 15,
+      fontSize: 14,
       fontFamily: "PoppinsMedium",
     },
   
@@ -1061,16 +1064,16 @@ async () => {
   
     symptomChip: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
       borderRadius: 999,
       backgroundColor: "#FAFAFA",
       borderWidth: 1,
-      borderColor: "#EEE",
+      borderColor: "#E4E4E4",
     },
   
     activeSymptomChip: {
-      backgroundColor: "#111",
-      borderColor: "#111",
+      backgroundColor: "#6B8DE3",
+      borderColor: "#6B8DE3",
     },
   
     symptomText: {
@@ -1086,49 +1089,50 @@ async () => {
     buttonRow: {
       flexDirection: "row",
       gap: 14,
-      marginTop: 30,
+      marginTop: 28,
     },
   
     backButton: {
       flex: 1,
-      height: 58,
-      borderRadius: 24,
-      backgroundColor: "#F3F3F3",
+      height: 56,
+      borderRadius: 18,
+      backgroundColor: "#F1F1F1",
       justifyContent: "center",
       alignItems: "center",
     },
   
     nextButton: {
       flex: 1,
-      height: 58,
-      borderRadius: 24,
-      backgroundColor: "#111",
+      height: 56,
+      borderRadius: 18,
+      backgroundColor: "#6B8DE3",
       justifyContent: "center",
       alignItems: "center",
     },
   
     backButtonText: {
       color: "#555",
-      fontSize: 16,
+      fontSize: 15,
       fontFamily: "PoppinsSemiBold",
     },
   
     nextButtonText: {
       color: "white",
-      fontSize: 16,
+      fontSize: 15,
       fontFamily: "PoppinsSemiBold",
     },
   
     errorBox: {
       padding: 14,
-      borderRadius: 18,
-      backgroundColor: "#FFE8E8",
-      marginBottom: 20,
+      borderRadius: 16,
+      backgroundColor: "#FFECEC",
+      marginBottom: 18,
     },
   
     errorText: {
-      color: "#D93939",
+      color: "#E5484D",
       textAlign: "center",
+      fontSize: 13,
       fontFamily: "PoppinsMedium",
     },
   
@@ -1137,31 +1141,32 @@ async () => {
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 40,
+      backgroundColor: "#F5F5F5",
     },
   
     successCircle: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
+      width: 92,
+      height: 92,
+      borderRadius: 46,
       backgroundColor: "#22C55E",
       justifyContent: "center",
       alignItems: "center",
-      marginBottom: 30,
+      marginBottom: 26,
     },
   
     successTitle: {
-      fontSize: 34,
+      fontSize: 28,
       color: "#111",
       textAlign: "center",
       fontFamily: "PoppinsBold",
     },
   
     successText: {
-      marginTop: 12,
-      fontSize: 16,
-      color: "#666",
+      marginTop: 10,
+      fontSize: 14,
+      color: "#777",
       textAlign: "center",
-      lineHeight: 28,
+      lineHeight: 24,
       fontFamily: "PoppinsRegular",
     },
   

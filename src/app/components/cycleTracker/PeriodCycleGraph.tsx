@@ -242,6 +242,8 @@ import {
       borderRadius: 30,
   
       padding: 20,
+
+      marginTop: 20,
   
       marginBottom: 24,
   

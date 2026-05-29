@@ -18,7 +18,7 @@ export default function TabsLayout() {
 
         tabBarStyle: {
 
-          height: 80,
+          height: 100,
 
           borderTopWidth: 0,
 
@@ -26,7 +26,7 @@ export default function TabsLayout() {
 
           backgroundColor: "white",
 
-          paddingBottom: 10,
+          paddingBottom: 40,
         },
 
         tabBarActiveTintColor: "#5B4CF0",
@@ -142,29 +142,6 @@ export default function TabsLayout() {
 
             <Ionicons
               name="happy"
-              size={size}
-              color={color}
-            />
-
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-
-        name="profile"
-
-        options={{
-
-          title: "Profile",
-
-          tabBarIcon: ({
-            color,
-            size,
-          }) => (
-
-            <Ionicons
-              name="person"
               size={size}
               color={color}
             />

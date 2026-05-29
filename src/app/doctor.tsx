@@ -33,6 +33,7 @@ interface Referral {
 
 export default function DoctorScreen() {
   const [activeTab, setActiveTab] = useState("referrals");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form States
   const [patientName, setPatientName] = useState("");
@@ -50,6 +51,9 @@ export default function DoctorScreen() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [selectedHistory, setSelectedHistory] = useState<any | null>(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [editingNoteText, setEditingNoteText] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [dossierActiveTab, setDossierActiveTab] = useState<"overview" | "timeline">("overview");
 
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
@@ -137,30 +141,131 @@ export default function DoctorScreen() {
     }
   };
 
-  const handleViewPatientHistory = async (referredId: string) => {
-    setHistoryLoading(true);
+  const handleViewPatientHistory = (referredId: string) => {
+    router.push({
+      pathname: "/dossier",
+      params: { referredId },
+    });
+  };
+
+  const handleSaveDoctorNote = async () => {
+    if (!selectedHistory?.profile?.id) {
+      Alert.alert("Error", "No user profile found associated with this patient.");
+      return;
+    }
+    setSavingNote(true);
     try {
       const storedToken = token || (await AsyncStorage.getItem("userToken"));
       const response = await fetch(
-        `https://womb-care-backend-76858014616.europe-west1.run.app/api/doctor/patient-history/${referredId}`,
+        `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${selectedHistory.profile.id}`,
         {
+          method: "PATCH",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${storedToken}`,
           },
+          body: JSON.stringify({
+            doctorNote: editingNoteText,
+          }),
         }
       );
       const resJson = await response.json();
       if (resJson.success) {
-        setSelectedHistory(resJson);
-        setShowHistoryModal(true);
+        Alert.alert("Success", "Clinical notes updated successfully! 🌸");
+        setSelectedHistory({
+          ...selectedHistory,
+          profile: {
+            ...selectedHistory.profile,
+            doctorNote: editingNoteText,
+          },
+        });
       } else {
-        Alert.alert("Access Denied", resJson.message || "Unable to retrieve clinical history.");
+        Alert.alert("Failed", resJson.message || "Failed to update clinical note.");
       }
     } catch (err) {
-      Alert.alert("Network Error", "Failed to retrieve history logs.");
+      Alert.alert("Connection Error", "Failed to update note. Please try again.");
     } finally {
-      setHistoryLoading(false);
+      setSavingNote(false);
     }
+  };
+
+  const getTimelineData = () => {
+    interface TimelineEvent {
+      date: Date;
+      type: "period_start" | "period_end" | "wellness_log" | "profile_created";
+      title: string;
+      details: string;
+    }
+    const events: TimelineEvent[] = [];
+
+    // 1. Add Profile Created Event
+    if (selectedHistory?.profile?.createdAt) {
+      events.push({
+        date: new Date(selectedHistory.profile.createdAt),
+        type: "profile_created",
+        title: "Account & Profile Created 🌸",
+        details: `Initial WombCare registration completed. Baseline parameters stored in user profiles.`,
+      });
+    }
+
+    // 2. Add Period History Events
+    if (selectedHistory?.periodHistory) {
+      selectedHistory.periodHistory.forEach((cycle: any) => {
+        if (cycle.startDate) {
+          events.push({
+            date: new Date(cycle.startDate),
+            type: "period_start",
+            title: "Period Cycle Started 🩸",
+            details: `Logged start of period cycle. Status: Active bleeding. Symptoms logged: ${
+              Array.isArray(cycle.symptoms) && cycle.symptoms.length > 0 ? cycle.symptoms.join(", ") : "None"
+            }.`,
+          });
+        }
+        if (cycle.endDate) {
+          events.push({
+            date: new Date(cycle.endDate),
+            type: "period_end",
+            title: "Period Cycle Ended ✨",
+            details: `Logged completion of period bleeding phase. Bleeding duration: ${
+              Math.round((new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24))
+            } days. Notes: ${cycle.notes || "None"}.`,
+          });
+        }
+      });
+    }
+
+    // 3. Add Wellness Telemetry History Events
+    if (selectedHistory?.wellnessHistory) {
+      selectedHistory.wellnessHistory.forEach((log: any) => {
+        const logDateStr = log.date || log.logDate;
+        if (logDateStr) {
+          const symptomsList = Array.isArray(log.symptoms) && log.symptoms.length > 0
+            ? log.symptoms.join(", ")
+            : "None";
+          events.push({
+            date: new Date(logDateStr),
+            type: "wellness_log",
+            title: "Daily Wellness Telemetry Log",
+            details: `Mood: ${log.mood || "N/A"} | Sleep: ${log.sleep || 0} hrs | Hydration: ${log.waterIntake || 0} ml | Cycle Day: ${log.cycleDay || "N/A"}\nActive Symptoms: ${symptomsList}${log.journal ? `\nJournal Description: "${log.journal}"` : ""}`,
+          });
+        }
+      });
+    }
+
+    // Sort events descending by date
+    events.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+    // Group events by Month & Year (e.g. "May 2026")
+    const grouped: { [monthYear: string]: TimelineEvent[] } = {};
+    events.forEach(event => {
+      const monthYear = event.date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+      if (!grouped[monthYear]) {
+        grouped[monthYear] = [];
+      }
+      grouped[monthYear].push(event);
+    });
+
+    return grouped;
   };
 
   if (!fontsLoaded) {
@@ -173,7 +278,22 @@ export default function DoctorScreen() {
 
   // Filter lists based on tab
   const activeReferralsList = referrals.filter((r) => r.referralStatus !== "converted");
-  const activePatientsList = referrals.filter((r) => r.referralStatus === "converted");
+  const activePatientsList = referrals
+    .filter((r) => r.referralStatus === "converted")
+    .filter((pat) => {
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      const patientName = (pat.patientName || "").toLowerCase();
+      const patientEmail = (pat.email || "").toLowerCase();
+      const patientCode = (pat.doctorReferralCode || "").toLowerCase();
+      const patientPhone = (pat.mobile || "").toLowerCase();
+      return (
+        patientName.includes(q) ||
+        patientEmail.includes(q) ||
+        patientCode.includes(q) ||
+        patientPhone.includes(q)
+      );
+    });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -359,6 +479,24 @@ export default function DoctorScreen() {
               <Ionicons name="heart" size={34} color="white" />
             </View>
 
+            {/* SEARCH BAR */}
+            <View style={styles.searchBarContainer}>
+              <Ionicons name="search-outline" size={20} color="#7C5CFF" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search by name, email, referral code..."
+                placeholderTextColor="#A0A0A0"
+                clearButtonMode="while-editing"
+              />
+              {searchQuery !== "" && (
+                <TouchableOpacity onPress={() => setSearchQuery("")} style={styles.clearSearchButton}>
+                  <Ionicons name="close-circle" size={18} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
+
             {/* PATIENT CARDS */}
             {activePatientsList.length === 0 ? (
               <View style={styles.emptyContainer}>
@@ -399,12 +537,12 @@ export default function DoctorScreen() {
           <View style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>
-                  {selectedHistory?.patient?.name || "Patient Dossier"}
+              <View style={{ flex: 1, marginRight: 10 }}>
+                <Text style={styles.modalTitle} numberOfLines={1}>
+                  {selectedHistory?.patient?.patientName || selectedHistory?.profile?.name || "Patient Dossier"}
                 </Text>
                 <Text style={styles.modalSubtitle}>
-                  {selectedHistory?.patient?.email || ""}
+                  {selectedHistory?.patient?.email || ""} {selectedHistory?.patient?.mobile ? `• ${selectedHistory.patient.mobile}` : ""}
                 </Text>
               </View>
               <TouchableOpacity
@@ -415,66 +553,195 @@ export default function DoctorScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Tab Selector */}
+            <View style={styles.dossierTabContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.dossierTabButton,
+                  dossierActiveTab === "overview" && styles.dossierTabButtonActive,
+                ]}
+                onPress={() => setDossierActiveTab("overview")}
+              >
+                <Ionicons
+                  name="file-tray-full-outline"
+                  size={14}
+                  color={dossierActiveTab === "overview" ? "white" : "#7C5CFF"}
+                />
+                <Text
+                  style={[
+                    styles.dossierTabButtonText,
+                    dossierActiveTab === "overview" && styles.dossierTabButtonTextActive,
+                  ]}
+                >
+                  Clinical Profile
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.dossierTabButton,
+                  dossierActiveTab === "timeline" && styles.dossierTabButtonActive,
+                ]}
+                onPress={() => setDossierActiveTab("timeline")}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={14}
+                  color={dossierActiveTab === "timeline" ? "white" : "#7C5CFF"}
+                />
+                <Text
+                  style={[
+                    styles.dossierTabButtonText,
+                    dossierActiveTab === "timeline" && styles.dossierTabButtonTextActive,
+                  ]}
+                >
+                  Date-wise History
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-              {/* Demographics Card */}
+              {dossierActiveTab === "overview" ? (
+                <>
+                  {/* Demographics & Clinical Profile */}
               <View style={styles.dossierCard}>
                 <Text style={styles.dossierSectionTitle}>Clinical Profile</Text>
                 <View style={styles.dossierRow}>
                   <View style={styles.dossierCol}>
                     <Text style={styles.dossierLabel}>Age</Text>
                     <Text style={styles.dossierValue}>
-                      {selectedHistory?.patient?.age || "Not specified"} years
+                      {selectedHistory?.profile?.age ? `${selectedHistory.profile.age} years` : "Not specified"}
                     </Text>
                   </View>
                   <View style={styles.dossierCol}>
                     <Text style={styles.dossierLabel}>Weight</Text>
                     <Text style={styles.dossierValue}>
-                      {selectedHistory?.patient?.weight || "Not specified"} kg
+                      {selectedHistory?.profile?.weight ? `${selectedHistory.profile.weight} kg` : "Not specified"}
                     </Text>
                   </View>
                 </View>
                 <View style={[styles.dossierRow, { marginTop: 12 }]}>
                   <View style={styles.dossierCol}>
-                    <Text style={styles.dossierLabel}>Cycle regularity</Text>
+                    <Text style={styles.dossierLabel}>Height</Text>
                     <Text style={styles.dossierValue}>
-                      {selectedHistory?.patient?.cycleRegularity || "regular"}
+                      {selectedHistory?.profile?.height ? `${selectedHistory.profile.height} cm` : "Not specified"}
                     </Text>
                   </View>
                   <View style={styles.dossierCol}>
-                    <Text style={styles.dossierLabel}>Country</Text>
+                    <Text style={styles.dossierLabel}>BMI Ratio</Text>
                     <Text style={styles.dossierValue}>
-                      {selectedHistory?.patient?.country || "India"}
+                      {(() => {
+                        const h = selectedHistory?.profile?.height;
+                        const w = selectedHistory?.profile?.weight;
+                        const bmiVal = selectedHistory?.profile?.bmi || (h && w ? parseFloat((w / Math.pow(h / 100, 2)).toFixed(1)) : null);
+                        return bmiVal 
+                          ? `${bmiVal} (${bmiVal < 18.5 ? "Under" : bmiVal < 25 ? "Normal" : bmiVal < 30 ? "Over" : "Obese"})`
+                          : "Not calculated";
+                      })()}
                     </Text>
                   </View>
                 </View>
+                <View style={[styles.dossierRow, { marginTop: 12 }]}>
+                  <View style={styles.dossierCol}>
+                    <Text style={styles.dossierLabel}>Cycle Length</Text>
+                    <Text style={styles.dossierValue}>
+                      {selectedHistory?.profile?.cycleLength ? `${selectedHistory.profile.cycleLength} days` : "Not specified"}
+                    </Text>
+                  </View>
+                  <View style={styles.dossierCol}>
+                    <Text style={styles.dossierLabel}>Mobile Contact</Text>
+                    <Text style={styles.dossierValue}>
+                      {selectedHistory?.patient?.mobile || "Not provided"}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Care Plan & Goals */}
+              <View style={styles.dossierCard}>
+                <Text style={styles.dossierSectionTitle}>Care Plan & Goals</Text>
+                
+                <Text style={styles.dossierLabel}>Active Program</Text>
+                {selectedHistory?.profile?.activePlan ? (
+                  <View style={selectedHistory.profile.activePlan.toLowerCase().includes("premium") ? styles.planBadgePremium : styles.planBadgeBasic}>
+                    <Text style={selectedHistory.profile.activePlan.toLowerCase().includes("premium") ? styles.planBadgeTextPremium : styles.planBadgeTextBasic}>
+                      ✨ {selectedHistory.profile.activePlan}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.dossierValueText, { color: "#666" }]}>No active Care Plan registered</Text>
+                )}
+
                 <View style={{ marginTop: 12 }}>
-                  <Text style={styles.dossierLabel}>Referral Reason</Text>
+                  <Text style={styles.dossierLabel}>Wellness Goal</Text>
                   <Text style={styles.dossierValueText}>
-                    {selectedHistory?.patient?.symptoms || "None"}
+                    🎯 {selectedHistory?.profile?.wellnessGoal || "General PCOD Management"}
+                  </Text>
+                </View>
+
+                <View style={{ marginTop: 12 }}>
+                  <Text style={styles.dossierLabel}>Tracked PCOD Symptoms</Text>
+                  {selectedHistory?.profile?.symptoms && selectedHistory.profile.symptoms.length > 0 ? (
+                    <View style={styles.symptomContainer}>
+                      {selectedHistory.profile.symptoms.map((symptom: string, sIdx: number) => (
+                        <View key={sIdx} style={styles.symptomBadge}>
+                          <Text style={styles.symptomBadgeText}>{symptom}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={[styles.dossierValueText, { fontStyle: "italic", color: "#999" }]}>
+                      No active PCOD symptoms logged
+                    </Text>
+                  )}
+                </View>
+
+                <View style={{ marginTop: 12 }}>
+                  <Text style={styles.dossierLabel}>Patient Onboarding Notes</Text>
+                  <Text style={styles.dossierValueText}>
+                    {selectedHistory?.profile?.personalNotes || selectedHistory?.patient?.problem || "No personal notes recorded."}
                   </Text>
                 </View>
               </View>
 
               {/* Period Cycle History */}
               <View style={styles.dossierCard}>
-                <Text style={styles.dossierSectionTitle}>Logged Cycles</Text>
+                <Text style={styles.dossierSectionTitle}>Logged Cycles & Periods</Text>
                 {selectedHistory?.periodHistory && selectedHistory.periodHistory.length > 0 ? (
-                  selectedHistory.periodHistory.map((cycle: any, idx: number) => (
-                    <View key={idx} style={styles.cycleHistoryItem}>
-                      <View style={styles.cycleIconContainer}>
-                        <Ionicons name="calendar-sharp" size={20} color="#FF4D8D" />
+                  selectedHistory.periodHistory.map((cycle: any, idx: number) => {
+                    const hasEnded = !!cycle.endDate;
+                    const bleedingDays = hasEnded
+                      ? Math.round((new Date(cycle.endDate).getTime() - new Date(cycle.startDate).getTime()) / (1000 * 60 * 60 * 24))
+                      : null;
+                    return (
+                      <View key={idx} style={styles.cycleHistoryItem}>
+                        <View style={styles.cycleIconContainer}>
+                          <Ionicons name="water" size={20} color="#FF4D8D" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.cycleDates}>
+                            Start: {new Date(cycle.startDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </Text>
+                          <Text style={[styles.cycleDates, { color: hasEnded ? "#555" : "#FF4D8D" }]}>
+                            End: {hasEnded ? new Date(cycle.endDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' }) : "Ongoing 🩸"}
+                          </Text>
+                          {hasEnded ? (
+                            <View style={styles.cycleDurationBadgeCompleted}>
+                              <Text style={styles.cycleDurationBadgeCompletedText}>
+                                {bleedingDays || 1} days bleeding period
+                              </Text>
+                            </View>
+                          ) : (
+                            <View style={styles.cycleDurationBadgeActive}>
+                              <Text style={styles.cycleDurationBadgeActiveText}>
+                                Period currently active
+                              </Text>
+                            </View>
+                          )}
+                        </View>
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.cycleDates}>
-                          Started: {new Date(cycle.startDate).toLocaleDateString()}
-                        </Text>
-                        <Text style={styles.cycleDates}>
-                          Ended:{" "}
-                          {cycle.endDate ? new Date(cycle.endDate).toLocaleDateString() : "Active"}
-                        </Text>
-                      </View>
-                    </View>
-                  ))
+                    );
+                  })
                 ) : (
                   <Text style={styles.noHistoryText}>No cycle logs tracked yet by user.</Text>
                 )}
@@ -482,24 +749,24 @@ export default function DoctorScreen() {
 
               {/* Daily Wellness Tracking */}
               <View style={styles.dossierCard}>
-                <Text style={styles.dossierSectionTitle}>Wellness & Telemetry</Text>
+                <Text style={styles.dossierSectionTitle}>Wellness Telemetry (Last 10 Days)</Text>
                 {selectedHistory?.wellnessHistory && selectedHistory.wellnessHistory.length > 0 ? (
-                  selectedHistory.wellnessHistory.slice(0, 5).map((log: any, idx: number) => (
+                  selectedHistory.wellnessHistory.slice(0, 10).map((log: any, idx: number) => (
                     <View key={idx} style={styles.wellnessHistoryItem}>
                       <View style={styles.wellnessIconContainer}>
-                        <Ionicons name="fitness" size={20} color="#7C5CFF" />
+                        <Ionicons name="pulse" size={20} color="#7C5CFF" />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.wellnessDate}>
-                          Log Date: {new Date(log.logDate).toLocaleDateString()}
+                          {new Date(log.logDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
                         </Text>
                         <View style={styles.wellnessDetailsRow}>
                           <Text style={styles.wellnessMetricText}>Mood: {log.mood || "N/A"}</Text>
                           <Text style={styles.wellnessMetricText}>
-                            Sleep: {log.sleepHours || "0"} hrs
+                            Sleep: {log.sleep || log.sleepHours || "0"} hrs
                           </Text>
                           <Text style={styles.wellnessMetricText}>
-                            Water: {log.waterIntakeMl || "0"} ml
+                            Water: {log.waterIntake || log.waterIntakeMl || "0"} ml
                           </Text>
                         </View>
                       </View>
@@ -509,7 +776,92 @@ export default function DoctorScreen() {
                   <Text style={styles.noHistoryText}>No daily wellness metrics logged yet.</Text>
                 )}
               </View>
-            </ScrollView>
+
+              {/* Clinical Guidance Section */}
+              <View style={styles.dossierCard}>
+                <Text style={styles.dossierSectionTitle}>Clinical Guidance & Note</Text>
+                <Text style={styles.dossierLabel}>Doctor Recommendations</Text>
+                <TextInput
+                  style={styles.noteInput}
+                  multiline
+                  numberOfLines={4}
+                  value={editingNoteText}
+                  onChangeText={setEditingNoteText}
+                  placeholder="Write custom diet plans, supplement recommendations, exercise logs, or guidance..."
+                  placeholderTextColor="#A0A0A0"
+                />
+                <TouchableOpacity
+                  style={styles.saveNoteButton}
+                  onPress={handleSaveDoctorNote}
+                  disabled={savingNote}
+                >
+                  {savingNote ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.saveNoteButtonText}>Save Clinical Guidance 🌸</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <View style={{ flex: 1, paddingHorizontal: 4, paddingVertical: 10 }}>
+              {(() => {
+                const grouped = getTimelineData();
+                const months = Object.keys(grouped);
+                
+                if (months.length === 0) {
+                  return (
+                    <View style={styles.dossierCard}>
+                      <Text style={styles.noHistoryText}>No timeline metrics or tracking logs available.</Text>
+                    </View>
+                  );
+                }
+
+                return months.map((monthYear, mIdx) => (
+                  <View key={mIdx} style={styles.timelineMonthSection}>
+                    <Text style={styles.timelineMonthHeader}>{monthYear}</Text>
+                    <View style={styles.timelineLineContainer}>
+                      {grouped[monthYear].map((event, eIdx) => {
+                        let badgeColor = "#7C5CFF";
+                        let badgeIcon = "pulse-outline";
+                        if (event.type === "period_start") {
+                          badgeColor = "#FF4D8D";
+                          badgeIcon = "water-outline";
+                        } else if (event.type === "period_end") {
+                          badgeColor = "#10B981";
+                          badgeIcon = "checkmark-circle-outline";
+                        } else if (event.type === "profile_created") {
+                          badgeColor = "#3B82F6";
+                          badgeIcon = "person-add-outline";
+                        }
+
+                        return (
+                          <View key={eIdx} style={styles.timelineEventItem}>
+                            {/* Left Icon Badge Indicator */}
+                            <View style={[styles.timelineBadge, { backgroundColor: badgeColor + "15", borderColor: badgeColor }]}>
+                              <Ionicons name={badgeIcon as any} size={11} color={badgeColor} />
+                            </View>
+                            
+                            {/* Event Content */}
+                            <View style={styles.timelineContent}>
+                              <View style={styles.timelineEventHeader}>
+                                <Text style={styles.timelineEventTitle} numberOfLines={1}>{event.title}</Text>
+                                <Text style={styles.timelineEventDate}>
+                                  {event.date.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}
+                                </Text>
+                              </View>
+                              <Text style={styles.timelineEventDetails}>{event.details}</Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ));
+              })()}
+            </View>
+          )}
+        </ScrollView>
 
             <TouchableOpacity
               onPress={() => setShowHistoryModal(false)}
@@ -944,6 +1296,135 @@ const styles = StyleSheet.create({
     color: "#666",
     fontFamily: "PoppinsMedium",
   },
+  dossierTabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F0E9FF",
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 16,
+  },
+  dossierTabButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+  },
+  dossierTabButtonActive: {
+    backgroundColor: "#7C5CFF",
+  },
+  dossierTabButtonText: {
+    fontSize: 13,
+    color: "#7C5CFF",
+    fontFamily: "PoppinsSemiBold",
+  },
+  dossierTabButtonTextActive: {
+    color: "white",
+  },
+  timelineMonthSection: {
+    marginBottom: 24,
+  },
+  timelineMonthHeader: {
+    fontSize: 13,
+    color: "#7C5CFF",
+    fontFamily: "PoppinsBold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  timelineLineContainer: {
+    borderLeftWidth: 2,
+    borderLeftColor: "#E2D9F3",
+    marginLeft: 14,
+    paddingLeft: 18,
+  },
+  timelineEventItem: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-start",
+    position: "relative",
+  },
+  timelineBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "absolute",
+    left: -32,
+    backgroundColor: "white",
+    borderWidth: 1.5,
+  },
+  timelineContent: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 14,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#F3EBFD",
+    shadowColor: "#7C5CFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  timelineEventHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  timelineEventTitle: {
+    fontSize: 11,
+    color: "#111",
+    fontFamily: "PoppinsSemiBold",
+    flex: 1,
+    marginRight: 6,
+  },
+  timelineEventDate: {
+    fontSize: 9,
+    color: "#888",
+    fontFamily: "PoppinsMedium",
+  },
+  timelineEventDetails: {
+    fontSize: 10,
+    color: "#555",
+    fontFamily: "PoppinsRegular",
+    lineHeight: 14,
+  },
+  searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2D9F3",
+    paddingHorizontal: 16,
+    height: 52,
+    marginTop: 16,
+    marginBottom: 12,
+    shadowColor: "#7C5CFF",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: "#111",
+    fontFamily: "PoppinsMedium",
+    paddingVertical: 8,
+  },
+  clearSearchButton: {
+    padding: 4,
+  },
   modalCloseButtonFull: {
     backgroundColor: "#111",
     borderRadius: 24,
@@ -955,6 +1436,101 @@ const styles = StyleSheet.create({
   modalCloseButtonText: {
     color: "white",
     fontSize: 16,
+    fontFamily: "PoppinsSemiBold",
+  },
+  symptomContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
+  },
+  symptomBadge: {
+    backgroundColor: "#FFE5EF",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  symptomBadgeText: {
+    fontSize: 12,
+    color: "#FF4D8D",
+    fontFamily: "PoppinsSemiBold",
+  },
+  planBadgePremium: {
+    backgroundColor: "#FFF3D6",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+    marginTop: 6,
+  },
+  planBadgeTextPremium: {
+    color: "#D89B00",
+    fontSize: 12,
+    fontFamily: "PoppinsBold",
+  },
+  planBadgeBasic: {
+    backgroundColor: "#E0F2FE",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignSelf: "flex-start",
+    marginTop: 6,
+  },
+  planBadgeTextBasic: {
+    color: "#0284C7",
+    fontSize: 12,
+    fontFamily: "PoppinsBold",
+  },
+  noteInput: {
+    borderWidth: 1,
+    borderColor: "#EFEAFA",
+    borderRadius: 18,
+    padding: 14,
+    minHeight: 100,
+    fontSize: 14,
+    color: "#111",
+    fontFamily: "PoppinsRegular",
+    backgroundColor: "#FAFAFA",
+    textAlignVertical: "top",
+    marginTop: 10,
+  },
+  saveNoteButton: {
+    backgroundColor: "#FF4D8D",
+    height: 50,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  saveNoteButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontFamily: "PoppinsSemiBold",
+  },
+  cycleDurationBadgeActive: {
+    backgroundColor: "#FEE2E2",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  cycleDurationBadgeActiveText: {
+    color: "#EF4444",
+    fontSize: 11,
+    fontFamily: "PoppinsSemiBold",
+  },
+  cycleDurationBadgeCompleted: {
+    backgroundColor: "#DCFCE7",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  cycleDurationBadgeCompletedText: {
+    color: "#16A34A",
+    fontSize: 11,
     fontFamily: "PoppinsSemiBold",
   },
 });

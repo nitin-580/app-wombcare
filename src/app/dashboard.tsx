@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   bannerContainer: {
     position: "absolute",
-    top: 50,
+    top: 20,
     left: 20,
     right: 20,
     zIndex: 9999,
