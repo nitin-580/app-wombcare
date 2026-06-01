@@ -10,23 +10,34 @@ import PeriodTrackerCalendarCard from "./components/cycleTracker/CalenderCard";
 import PeriodTimelineGraph from "./components/cycleTracker/PeriodCycleGraph";
 import PeriodCalendar from "./components/cycleTracker/LogPeriodButton";
 import PeriodMetricsCard from "./components/cycleTracker/CycleMetric";
+import SkeletonLoader from "./components/common/SkeletonLoader";
 
 export default function CycleScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
-
-  // Automatically refresh when screen focused or navigated to
+  // Automatically refresh and show skeleton loader when screen focused or navigated to
   useFocusEffect(
     useCallback(() => {
+      setLoading(true);
       setRefreshKey((prev) => prev + 1);
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 700);
+      return () => clearTimeout(timer);
     }, [])
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <SkeletonLoader preset="cycle" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {/* TOP BACKGROUND */}
       <View style={styles.topBackground} />
 

@@ -36,15 +36,6 @@ import {
           Classes
         </Text>
   
-        <Image
-  
-          source={{
-            uri: "https://randomuser.me/api/portraits/women/44.jpg",
-          }}
-  
-          style={styles.avatar}
-        />
-  
       </View>
   
     );

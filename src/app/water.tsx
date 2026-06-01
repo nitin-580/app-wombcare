@@ -16,6 +16,7 @@ import QuickAddWater from "./components/waterTracker/QuickAddWater";
 import HydrationInsight from "./components/waterTracker/HydrationInsight";
 import ReminderCard from "./components/waterTracker/ReminderCard";
 import CustomWaterInputButton from "./components/waterTracker/CustomWater";
+import SkeletonLoader from "./components/common/SkeletonLoader";
 
 export default function WaterScreen() {
   const [waterIntake, setWaterIntake] = useState(0); // stored in glasses
@@ -47,12 +48,16 @@ export default function WaterScreen() {
     } catch (err) {
       console.log("Error loading water progress:", err);
     } finally {
-      setLoading(false);
+      // Premium transition delay
+      setTimeout(() => {
+        setLoading(false);
+      }, 700);
     }
   }
 
   useFocusEffect(
     useCallback(() => {
+      setLoading(true);
       fetchWaterData();
     }, [])
   );
@@ -142,13 +147,11 @@ export default function WaterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <WaterHeader />
 
       {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#56CCF2" />
-        </View>
+        <SkeletonLoader preset="water" />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}

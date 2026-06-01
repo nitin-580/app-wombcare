@@ -44,6 +44,9 @@ export default function DashboardHeader() {
   const [user, setUser] =
     useState<UserType | null>(null);
 
+  const [profileImage, setProfileImage] =
+    useState<string | null>(null);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -68,31 +71,25 @@ export default function DashboardHeader() {
   }, []);
 
   const loadUser = async () => {
-
     try {
-
-      const storedUser =
-        await AsyncStorage.getItem(
-          "userData"
-        );
-
+      const storedUser = await AsyncStorage.getItem("userData");
       if (storedUser) {
-
-        const parsedUser =
-          JSON.parse(storedUser);
-
+        const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
+
+        const uid = parsedUser.id || parsedUser._id;
+        if (uid) {
+          const storedAvatar = await AsyncStorage.getItem(`profile_avatar_${uid}`);
+          if (storedAvatar) {
+            setProfileImage(storedAvatar);
+          } else if (parsedUser.profileImage) {
+            setProfileImage(parsedUser.profileImage);
+          }
+        }
       }
-
     } catch (err) {
-
-      console.log(
-        "USER LOAD ERROR:",
-        err
-      );
-
+      console.log("USER LOAD ERROR:", err);
     } finally {
-
       setLoading(false);
     }
   };
@@ -165,26 +162,19 @@ export default function DashboardHeader() {
         }
       >
 
-        {user?.profileImage ? (
-
+        {profileImage ? (
           <Image
-
             source={{
-              uri:
-                user.profileImage,
+              uri: profileImage,
             }}
-
             style={styles.profileImage}
           />
-
         ) : (
-
           <Ionicons
             name="person"
             size={22}
             color="#111"
           />
-
         )}
 
       </TouchableOpacity>
@@ -212,7 +202,7 @@ const styles = StyleSheet.create({
 
     alignItems: "center",
 
-    marginTop: 30,
+    marginTop: 10,
 
     marginBottom: 10,
   },

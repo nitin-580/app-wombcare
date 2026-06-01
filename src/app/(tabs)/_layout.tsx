@@ -18,15 +18,21 @@ export default function TabsLayout() {
 
         tabBarStyle: {
 
-          height: 100,
+          height: 80,
 
-          borderTopWidth: 0,
+          borderTopWidth: 1,
+          borderTopColor: "#F1F5F9",
 
-          elevation: 0,
+          elevation: 8,
 
           backgroundColor: "white",
 
-          paddingBottom: 40,
+          paddingBottom: 25,
+          
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.04,
+          shadowRadius: 6,
         },
 
         tabBarActiveTintColor: "#5B4CF0",

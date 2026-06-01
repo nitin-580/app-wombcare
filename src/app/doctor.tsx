@@ -39,7 +39,7 @@ export default function DoctorScreen() {
   const [patientName, setPatientName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
-  const [problem, setProblem] = useState("");
+  const [problem, setProblem] = useState("PCOD/PMOS");
 
   // Data States
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -95,8 +95,8 @@ export default function DoctorScreen() {
   }, []);
 
   const handleRefer = async () => {
-    if (!patientName.trim() || !mobile.trim() || !email.trim()) {
-      Alert.alert("Required Fields", "Please provide a name, mobile, and email address.");
+    if (!patientName.trim() || !mobile.trim() || !problem) {
+      Alert.alert("Required Fields", "Please provide a name, mobile, and select a condition.");
       return;
     }
 
@@ -114,8 +114,8 @@ export default function DoctorScreen() {
           body: JSON.stringify({
             patientName: patientName.trim(),
             mobile: mobile.trim(),
-            email: email.trim(),
-            problem: problem.trim(),
+            email: "",
+            problem: problem,
           }),
         }
       );
@@ -391,30 +391,56 @@ export default function DoctorScreen() {
               </View>
 
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email Address</Text>
-                <TextInput
-                  placeholder="patient@email.com"
-                  placeholderTextColor="#AAA"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+                <Text style={styles.label}>Clinical Condition / Goal</Text>
+                <View style={styles.toggleRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                      styles.toggleOption,
+                      problem === "PCOD/PMOS" && styles.toggleOptionActive,
+                    ]}
+                    onPress={() => setProblem("PCOD/PMOS")}
+                  >
+                    <Ionicons
+                      name="medical-outline"
+                      size={16}
+                      color={problem === "PCOD/PMOS" ? "white" : "#FF4D8D"}
+                      style={styles.optionIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.toggleOptionText,
+                        problem === "PCOD/PMOS" && styles.toggleOptionTextActive,
+                      ]}
+                    >
+                      PCOD/PMOS
+                    </Text>
+                  </TouchableOpacity>
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Problem / Symptom details</Text>
-                <TextInput
-                  placeholder="Irregular cycles, severe cramping, hormonal acne..."
-                  placeholderTextColor="#AAA"
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                  style={styles.textArea}
-                  value={problem}
-                  onChangeText={setProblem}
-                />
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[
+                      styles.toggleOption,
+                      problem === "Conceive" && styles.toggleOptionActive,
+                    ]}
+                    onPress={() => setProblem("Conceive")}
+                  >
+                    <Ionicons
+                      name="heart-outline"
+                      size={16}
+                      color={problem === "Conceive" ? "white" : "#FF4D8D"}
+                      style={styles.optionIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.toggleOptionText,
+                        problem === "Conceive" && styles.toggleOptionTextActive,
+                      ]}
+                    >
+                      Conceive
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <TouchableOpacity
@@ -449,7 +475,7 @@ export default function DoctorScreen() {
                       {ref.problem || "No notes provided"}
                     </Text>
                     <Text style={styles.patientMeta}>
-                      {ref.email} • {ref.mobile}
+                      {ref.email ? `${ref.email} • ` : ""}{ref.mobile}
                     </Text>
                   </View>
                   <View
@@ -1532,5 +1558,36 @@ const styles = StyleSheet.create({
     color: "#16A34A",
     fontSize: 11,
     fontFamily: "PoppinsSemiBold",
+  },
+  toggleRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 6,
+  },
+  toggleOption: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFF0F5",
+    borderWidth: 1.5,
+    borderColor: "#FFE4E1",
+    paddingVertical: 12,
+    borderRadius: 16,
+  },
+  toggleOptionActive: {
+    backgroundColor: "#FF4D8D",
+    borderColor: "#FF4D8D",
+  },
+  optionIcon: {
+    marginRight: 6,
+  },
+  toggleOptionText: {
+    fontSize: 13,
+    fontFamily: "PoppinsSemiBold",
+    color: "#FF4D8D",
+  },
+  toggleOptionTextActive: {
+    color: "white",
   },
 });

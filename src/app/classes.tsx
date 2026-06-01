@@ -38,6 +38,8 @@ from "./components/classes/YoutubePlayer";
 import WombCareChatUI from "./components/classes/ChatBubble";
 import LiveClassRoomModal from "./components/classes/LiveClassRoomModal";
 
+import SkeletonLoader from "./components/common/SkeletonLoader";
+
 export default function ClassesScreen() {
   const navigation = useNavigation();
 
@@ -47,6 +49,19 @@ export default function ClassesScreen() {
   const [selectedLiveClass, setSelectedLiveClass] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Transition Focus Listener
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      setLoading(true);
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 750);
+      return () => clearTimeout(timer);
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
@@ -71,9 +86,17 @@ export default function ClassesScreen() {
     }
   }, [navigation]);
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <SkeletonLoader preset="classes" />
+      </SafeAreaView>
+    );
+  }
+
   return (
 
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
 
       <ScrollView
         showsVerticalScrollIndicator={false}

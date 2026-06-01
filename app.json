@@ -4,11 +4,11 @@
     "slug": "wombcare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./src/assets/images/icon.png",
     "scheme": "wombcare",
     "userInterfaceStyle": "light",
     "android": {
-      "package": "com.nitin.wombcare",
+      "package": "com.wombcare.app",
       "permissions": [
         "INTERNET"
       ],
@@ -19,7 +19,7 @@
       "predictiveBackGestureEnabled": false
     },
     "ios": {
-      "bundleIdentifier": "com.nitin.wombcare",
+      "bundleIdentifier": "com.wombcare.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

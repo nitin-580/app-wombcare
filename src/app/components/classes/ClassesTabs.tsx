@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
 
     flex: 1,
 
-    height: 54,
+    height: 44,
 
     borderRadius: 16,
 
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
 
   tabText: {
 
-    fontSize: 16,
+    fontSize: 12,
 
     color: "#666",
 

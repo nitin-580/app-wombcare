@@ -20,11 +20,15 @@ import DashboardHeader from "./components/dashboard/DashboardHeader";
 import HealthScoreCard from "./components/dashboard/HealthScoreCard";
 import WellnessStatsCards from "./components/dashboard/ToggleButton";
 import EnergyLevelsCard from "./components/dashboard/EnergyGraphs";
+import BannersSection from "./components/dashboard/BannersSection";
 import UpcomingClassCard from "./components/dashboard/UpcomingClasses";
 import AIHealthAssistantCard from "./components/dashboard/ChatSection";
 import TutorialVideosSection from "./components/dashboard/VideoTutorial";
 import SectionTitle from "./components/dashboard/SectionTitle";
 import InsightCard from "./components/dashboard/InsightsCard";
+import TestimonialsSection from "./components/dashboard/Testimonials";
+import SkeletonLoader from "./components/common/SkeletonLoader";
+import FooterBrandCard from "./components/common/FooterBrandCard";
 
 export default function Dashboard() {
   const navigation = useNavigation();
@@ -34,6 +38,7 @@ export default function Dashboard() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [profile, setProfile] = useState<any>(null);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [dynamicInsights, setDynamicInsights] = useState<any[]>([
     {
       title: "Hydration Reminder 💧",
@@ -101,7 +106,11 @@ export default function Dashboard() {
 
   // Run on mount
   useEffect(() => {
-    fetchProfile();
+    fetchProfile().finally(() => {
+      setTimeout(() => {
+        setIsFirstLoad(false);
+      }, 850);
+    });
   }, []);
 
   // Simulate data fetching on Pull-to-refresh
@@ -195,6 +204,15 @@ export default function Dashboard() {
     });
   };
 
+  if (isFirstLoad) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView style={{ backgroundColor: "#FAFAFA" }} edges={["top"]} />
+        <SkeletonLoader preset="dashboard" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Solid shield for system status bar zone to block scrolling overlap */}
@@ -248,11 +266,13 @@ export default function Dashboard() {
 
         <EnergyLevelsCard />
 
+        <BannersSection />
+
         <UpcomingClassCard refreshing={refreshing} />
 
-        <TutorialVideosSection />
-
         <AIHealthAssistantCard />
+
+        <TestimonialsSection />
 
         <SectionTitle title="Today's Insights" />
 
@@ -263,6 +283,11 @@ export default function Dashboard() {
             text={insight.text}
           />
         ))}
+
+        <FooterBrandCard
+          hashtag="#goWombCare"
+          title1="🌸 Built for Women"
+        />
       </ScrollView>
     </View>
   );

@@ -7,22 +7,38 @@ import MoodHeader from "./components/moodTracker/MoodHeader";
 import MoodTrendGraph from "./components/moodTracker/Graph";
 import JournalHistoryCard from "./components/moodTracker/JournalHistory";
 
+import SkeletonLoader from "./components/common/SkeletonLoader";
+
 export default function MoodScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
   };
 
-  // Automatically refresh when the screen is focused / clicked into
+  // Automatically refresh and show skeleton when the screen is focused / clicked into
   useFocusEffect(
     useCallback(() => {
+      setLoading(true);
       setRefreshKey((prev) => prev + 1);
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 700);
+      return () => clearTimeout(timer);
     }, [])
   );
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <SkeletonLoader preset="mood" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}

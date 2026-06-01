@@ -15,13 +15,12 @@ type Props = {
 
 export default function FooterBrandCard({
 
-  hashtag = "#goWombCare",
+  hashtag = "#WombCare",
 
   title1 = "🌸 Built for Women",
 
   title3 = "Made with love in 🇮🇳",
 
-  title2 = "💜 Powered by Wellness AI",
 
 }: Props) {
 
@@ -73,10 +72,6 @@ export default function FooterBrandCard({
 
           <Text style={styles.footerText}>
             {title3}
-          </Text>
-
-          <Text style={styles.footerText}>
-            {title2}
           </Text>
 
         </View>
