@@ -83,7 +83,7 @@ export default function HealthScoreCard() {
       const response =
         await fetch(
 
-          `https://womb-care-backend-76858014616.us-central1.run.app/api/profiles/${userId}`,
+          `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
 
           {
 
@@ -181,6 +181,22 @@ export default function HealthScoreCard() {
       );
   }
 
+  const getCycleAdvice = (day: number) => {
+    if (day >= 1 && day <= 5) {
+      return "Your body is recharging. Focus on gentle rest and self-care. ";
+    }
+    if (day >= 6 && day <= 13) {
+      return "Energy is rising. A great time for activity and setting goals! ";
+    }
+    if (day === 14 || day === 15) {
+      return "Peak vitality! You are glowing and at your most vibrant. ";
+    }
+    if (day >= 16 && day <= 28) {
+      return "Winding down. Listen to your body and prioritize comfort. ";
+    }
+    return "Every cycle is unique. Keep tracking and support your rhythm. ";
+  };
+
   /* ---------------- PERIOD STATUS ---------------- */
 
   const nextPeriod =
@@ -215,7 +231,7 @@ export default function HealthScoreCard() {
 
         <Text style={styles.subtitle}>
 
-          Expected {nextPeriod}
+          {getCycleAdvice(currentCycleDay)}
 
         </Text>
 
@@ -329,13 +345,10 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-
-    marginTop: 16,
-
-    color: "#777",
-
-    fontSize: 15,
-
+    marginTop: 12,
+    color: "#666",
+    fontSize: 13,
+    lineHeight: 18,
     fontFamily: "PoppinsRegular",
   },
 

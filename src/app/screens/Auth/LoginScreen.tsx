@@ -27,7 +27,10 @@ import {
   Ionicons,
 } from "@expo/vector-icons";
 
+import { useResponsive } from "../../../utils/responsive";
+
 export default function LoginScreen() {
+  const { responsiveContainerStyle } = useResponsive();
 
   const [email, setEmail] =
     useState("");
@@ -73,7 +76,7 @@ export default function LoginScreen() {
 
       const response = await fetch(
 
-        "https://womb-care-backend-76858014616.us-central1.run.app/api/doctors/login",
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/doctors/login",
 
         {
 
@@ -198,6 +201,10 @@ export default function LoginScreen() {
 
     <SafeAreaView style={styles.container}>
 
+      {/* Glowing Brand Aesthetic Circles */}
+      <View style={styles.glowingBlobPink} />
+      <View style={styles.glowingBlobPurple} />
+
       <KeyboardAvoidingView
 
         style={{ flex: 1 }}
@@ -222,7 +229,7 @@ export default function LoginScreen() {
 
           {/* CARD */}
 
-          <View style={styles.card}>
+          <View style={[styles.card, responsiveContainerStyle]}>
 
             {/* TABS */}
 
@@ -430,7 +437,28 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F8F4FF",
+    overflow: "hidden",
+  },
+  glowingBlobPink: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "#FFE5EF",
+    opacity: 0.6,
+  },
+  glowingBlobPurple: {
+    position: "absolute",
+    bottom: -80,
+    left: -80,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "#EEE9FF",
+    opacity: 0.6,
   },
 
   topSection: {
@@ -447,7 +475,7 @@ const styles = StyleSheet.create({
 
   logo: {
     fontSize: 14,
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsRegular",
   },
 
@@ -460,9 +488,7 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
-    backgroundColor: "white",
-    borderTopLeftRadius: 38,
-    borderTopRightRadius: 38,
+    backgroundColor: "transparent",
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 30,
@@ -478,7 +504,7 @@ const styles = StyleSheet.create({
 
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: "#6B8DE3",
+    borderBottomColor: "#7C5CFF",
     paddingBottom: 8,
     minWidth: 90,
     alignItems: "center",
@@ -486,7 +512,7 @@ const styles = StyleSheet.create({
 
   activeTabText: {
     fontSize: 17,
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsBold",
   },
 
@@ -540,7 +566,7 @@ const styles = StyleSheet.create({
 
   forgotPassword: {
     textAlign: "right",
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     marginTop: 2,
     marginBottom: 24,
     fontSize: 14,
@@ -557,7 +583,7 @@ const styles = StyleSheet.create({
 
   button: {
     height: 58,
-    backgroundColor: "#6B8DE3",
+    backgroundColor: "#7C5CFF",
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
@@ -579,7 +605,7 @@ const styles = StyleSheet.create({
   },
 
   signupText: {
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsSemiBold",
   },
 

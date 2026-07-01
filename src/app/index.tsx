@@ -5,19 +5,25 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
   StatusBar,
+  Image,
+  useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
-
-const { width, height } = Dimensions.get("window");
+import * as WebBrowser from "expo-web-browser";
+import MedicalDisclaimerModal from "./components/common/MedicalDisclaimerModal";
+import { useResponsive } from "../utils/responsive";
 
 export default function EntryScreen() {
+  const { width, height } = useWindowDimensions();
+  const { isTablet, responsiveContainerStyle } = useResponsive();
   const router = useRouter();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [isAgreed, setIsAgreed] = useState(false);
 
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../assets/fonts/Poppins-Regular.ttf"),
@@ -26,64 +32,77 @@ export default function EntryScreen() {
     PoppinsBold: require("../assets/fonts/Poppins-Bold.ttf"),
   });
 
-  useEffect(() => {
-    const checkLoginSession = async () => {
-      try {
-        const token = await AsyncStorage.getItem("userToken");
-        const role = await AsyncStorage.getItem("userRole");
-        const userDataStr = await AsyncStorage.getItem("userData");
+  const checkSessionAndDisclaimer = async () => {
+    try {
+      const accepted = await AsyncStorage.getItem("disclaimerAccepted");
+      if (accepted !== "true") {
+        setShowDisclaimer(true);
+        setIsCheckingSession(false);
+        return;
+      }
 
-        if (token && role) {
-          if (role === "doctor") {
-            router.replace("/doctor");
-            return;
-          } else {
-            let isProfileCompleted = false;
-            if (userDataStr) {
+      const token = await AsyncStorage.getItem("userToken");
+      const role = await AsyncStorage.getItem("userRole");
+      const userDataStr = await AsyncStorage.getItem("userData");
+
+      if (token && role) {
+        if (role === "doctor") {
+          router.replace("/doctor");
+          return;
+        } else {
+          let isProfileCompleted = false;
+          if (userDataStr) {
+            try {
+              const userData = JSON.parse(userDataStr);
+              const userId = userData.id || userData._id;
+              
+              // Fetch fresh profile state to check onboarding gating status
+              const profileResp = await fetch(
+                `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              const profileData = await profileResp.json();
+              if (profileData.success && profileData.data) {
+                isProfileCompleted = profileData.data.profileCompleted === true;
+              } else {
+                isProfileCompleted = userData.profileCompleted === true;
+              }
+            } catch (e) {
               try {
                 const userData = JSON.parse(userDataStr);
-                const userId = userData.id || userData._id;
-                
-                // Fetch fresh profile state to check onboarding gating status
-                const profileResp = await fetch(
-                  `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}`,
-                  {
-                    headers: { Authorization: `Bearer ${token}` },
-                  }
-                );
-                const profileData = await profileResp.json();
-                if (profileData.success && profileData.data) {
-                  isProfileCompleted = profileData.data.profileCompleted === true;
-                } else {
-                  isProfileCompleted = userData.profileCompleted === true;
-                }
-              } catch (e) {
-                try {
-                  const userData = JSON.parse(userDataStr);
-                  isProfileCompleted = userData.profileCompleted === true;
-                } catch (_) {}
-              }
+                isProfileCompleted = userData.profileCompleted === true;
+              } catch (_) {}
             }
-            
-            if (isProfileCompleted) {
-              router.replace("/(tabs)");
-            } else {
-              router.replace("/personalForm");
-            }
-            return;
           }
+          
+          if (isProfileCompleted) {
+            router.replace("/(tabs)");
+          } else {
+            router.replace("/personalForm");
+          }
+          return;
         }
-      } catch (err) {
-        console.error("Auto-login session retrieval error:", err);
-      } finally {
-        setIsCheckingSession(false);
       }
-    };
+    } catch (err) {
+      console.error("Auto-login session retrieval error:", err);
+    } finally {
+      setIsCheckingSession(false);
+    }
+  };
 
+  useEffect(() => {
     if (fontsLoaded) {
-      checkLoginSession();
+      checkSessionAndDisclaimer();
     }
   }, [fontsLoaded]);
+
+  const handleDisclaimerAccept = () => {
+    setShowDisclaimer(false);
+    setIsCheckingSession(true);
+    checkSessionAndDisclaimer();
+  };
 
   if (!fontsLoaded || isCheckingSession) {
     return (
@@ -95,7 +114,7 @@ export default function EntryScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: height * (isTablet ? 0.05 : 0.12), paddingBottom: height * (isTablet ? 0.03 : 0.05) }]}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       
       {/* Glowing Brand Aesthetic Circles */}
@@ -103,16 +122,20 @@ export default function EntryScreen() {
       <View style={styles.glowingBlobPurple} />
 
       {/* Header Branding */}
-      <View style={styles.brandingSection}>
+      <View style={[styles.brandingSection, responsiveContainerStyle]}>
         <View style={styles.logoContainer}>
-          <Ionicons name="rose-outline" size={46} color="#FF4D8D" style={styles.logoIcon} />
+          <Image
+            source={require("../assets/images/icon.png")}
+            style={styles.logoImage}
+            resizeMode="cover"
+          />
         </View>
         <Text style={styles.brandTitle}>wombcare</Text>
-        <Text style={styles.brandSubtitle}>India's most trusted PCOD care platform</Text>
+        <Text style={styles.brandSubtitle}>{"India's most trusted PCOD care platform"}</Text>
       </View>
 
       {/* Premium Visual Banner */}
-      <View style={styles.heroSection}>
+      <View style={[styles.heroSection, responsiveContainerStyle]}>
         <View style={styles.glassCard}>
           <Ionicons name="heart-circle-outline" size={32} color="#7C5CFF" />
           <Text style={styles.heroText}>Hormonal Balance & Period Wellness</Text>
@@ -123,20 +146,53 @@ export default function EntryScreen() {
       </View>
 
       {/* Footer & Get Started button */}
-      <View style={styles.footerSection}>
+      <View style={[styles.footerSection, responsiveContainerStyle]}>
         <TouchableOpacity
-          style={styles.getStartedButton}
-          onPress={() => router.push("/(auth)")}
+          style={styles.checkboxContainer}
+          activeOpacity={0.8}
+          onPress={() => setIsAgreed(!isAgreed)}
+        >
+          <View style={[styles.checkbox, isAgreed && styles.checkboxChecked]}>
+            {isAgreed && <Ionicons name="checkmark" size={14} color="white" />}
+          </View>
+          <View style={styles.checkboxLabelContainer}>
+            <Text style={styles.checkboxLabel}>
+              {"I agree to WombCare's "}
+              <Text
+                style={styles.hyperlink}
+                onPress={() => WebBrowser.openBrowserAsync("https://wombcare.in/terms-and-conditions")}
+              >
+                Terms of Service
+              </Text>{" "}
+              and{" "}
+              <Text
+                style={styles.hyperlink}
+                onPress={() => WebBrowser.openBrowserAsync("https://wombcare.in/privacy-policy")}
+              >
+                Privacy Policy
+              </Text>.
+            </Text>
+            <Text style={styles.checkboxSubLabel}>
+              I understand that WombCare may process my health information, including menstrual cycle data and wellness information, to provide cycle tracking and personalized wellness features.
+            </Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.getStartedButton, !isAgreed && styles.getStartedButtonDisabled]}
+          onPress={() => {
+            if (isAgreed) {
+              router.push("/(auth)");
+            }
+          }}
+          disabled={!isAgreed}
           activeOpacity={0.8}
         >
           <Text style={styles.getStartedText}>Get Started</Text>
           <Ionicons name="arrow-forward" size={18} color="white" style={styles.arrowIcon} />
         </TouchableOpacity>
-
-        <Text style={styles.privacyNote}>
-          By continuing, you agree to our Terms of Service & Privacy Policy
-        </Text>
       </View>
+      <MedicalDisclaimerModal visible={showDisclaimer} onAccept={handleDisclaimerAccept} />
     </View>
   );
 }
@@ -159,8 +215,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F4FF",
     justifyContent: "space-between",
     paddingHorizontal: 24,
-    paddingTop: height * 0.12,
-    paddingBottom: height * 0.05,
     overflow: "hidden",
   },
   glowingBlobPink: {
@@ -200,9 +254,11 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
     marginBottom: 16,
+    overflow: "hidden",
   },
-  logoIcon: {
-    marginTop: 2,
+  logoImage: {
+    width: "100%",
+    height: "100%",
   },
   brandTitle: {
     fontSize: 32,
@@ -270,6 +326,11 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginBottom: 16,
   },
+  getStartedButtonDisabled: {
+    backgroundColor: "#E2E8F0",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   getStartedText: {
     color: "white",
     fontSize: 16,
@@ -278,10 +339,46 @@ const styles = StyleSheet.create({
   arrowIcon: {
     marginLeft: 8,
   },
-  privacyNote: {
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 20,
+    paddingHorizontal: 4,
+    width: "100%",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#CBD5E0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    borderColor: "#7C5CFF",
+    backgroundColor: "#7C5CFF",
+  },
+  checkboxLabelContainer: {
+    flex: 1,
+  },
+  checkboxLabel: {
+    fontSize: 12,
+    color: "#2D3748",
+    fontFamily: "PoppinsSemiBold",
+    lineHeight: 18,
+  },
+  hyperlink: {
+    color: "#7C5CFF",
+    textDecorationLine: "underline",
+  },
+  checkboxSubLabel: {
     fontSize: 10,
-    color: "#999",
+    color: "#718096",
     fontFamily: "PoppinsRegular",
-    textAlign: "center",
+    lineHeight: 15,
+    marginTop: 4,
   },
 });

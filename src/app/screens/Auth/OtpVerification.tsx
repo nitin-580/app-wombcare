@@ -14,8 +14,10 @@ import {
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
+import { useResponsive } from "../../../utils/responsive";
 
 export default function VerifyCodeScreen() {
+  const { responsiveContainerStyle } = useResponsive();
 
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
@@ -72,7 +74,7 @@ export default function VerifyCodeScreen() {
 
           {/* CARD */}
 
-          <View style={styles.card}>
+          <View style={[styles.card, responsiveContainerStyle]}>
 
             <Text style={styles.title}>
               Verify Code

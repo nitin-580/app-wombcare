@@ -48,8 +48,13 @@ export default function JournalHistoryCard() {
       );
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
+        // Sort raw data descending first (newest first)
+        const sortedData = [...result.data].sort((a, b) => {
+          return b.date.localeCompare(a.date);
+        });
+
         // Map history rows containing "Note: ..." or dedicated journal to journal entries
-        const mapped: JournalItem[] = result.data
+        const mapped: JournalItem[] = sortedData
           .map((item: any) => {
             const symptoms: string[] = Array.isArray(item.symptoms) ? item.symptoms : [];
             const noteSymptom = symptoms.find((s) => typeof s === "string" && s.startsWith("Note:"));
@@ -83,9 +88,7 @@ export default function JournalHistoryCard() {
               sleep: item.sleep || 0
             };
           })
-          .filter((x): x is any => x !== null)
-          // Sort by date descending (newest first)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          .filter((x): x is JournalItem => x !== null);
 
         setJournals(mapped);
       }
@@ -213,7 +216,7 @@ export default function JournalHistoryCard() {
               onPress={() => setExpanded(!expanded)}
             >
               <Text style={styles.toggleButtonText}>
-                {expanded ? "Show Less" : `Show More (${journals.length - 5} entries)`}
+                {expanded ? "Show Less" : "View Full History"}
               </Text>
               <Ionicons
                 name={expanded ? "chevron-up" : "chevron-down"}

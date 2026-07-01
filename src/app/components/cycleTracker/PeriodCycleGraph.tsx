@@ -82,52 +82,34 @@ import {
             result.success &&
             Array.isArray(result.data)
           ) {
-            const formatted =
-              result.data
-                .map(
-                  (
-                    item: PeriodHistoryItem
-                  ) => {
-                    const start =
-                      new Date(
-                        item.startDate
-                      );
-  
-                    const end =
-                      item.endDate
-                        ? new Date(
-                            item.endDate
-                          )
-                        : new Date();
-  
-                    const days =
-                      Math.ceil(
-                        (end.getTime() -
-                          start.getTime()) /
-                          (1000 *
-                            60 *
-                            60 *
-                            24)
-                      ) + 1;
-  
-                    const month =
-                      start.toLocaleString(
-                        "default",
-                        {
-                          month: "short",
-                        }
-                      );
-  
-                    return {
-                      id: item.id,
-                      month,
-                      days,
-                    };
-                  }
-                )
-                .reverse();
-  
-            setHistory(formatted);
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+            const formatted = result.data
+              .filter((item: PeriodHistoryItem) => {
+                const start = new Date(item.startDate);
+                return start >= sixMonthsAgo;
+              })
+              .map((item: PeriodHistoryItem) => {
+                const start = new Date(item.startDate);
+                const end = item.endDate ? new Date(item.endDate) : new Date();
+                const days =
+                  Math.ceil(
+                    (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+                  ) + 1;
+                const month = start.toLocaleString("default", {
+                  month: "short",
+                });
+                return {
+                  id: item.id,
+                  month,
+                  days,
+                  startDate: start,
+                };
+              });
+
+            const sorted = formatted.sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+            setHistory(sorted);
           }
         } catch (err) {
           console.log(

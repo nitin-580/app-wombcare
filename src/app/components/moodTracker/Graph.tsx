@@ -3,17 +3,20 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   ActivityIndicator,
+  useWindowDimensions,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { useFonts } from "expo-font";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
-
-const screenWidth = Dimensions.get("window").width;
+import { useResponsive } from "../../../utils/responsive";
 
 export default function MoodTrendGraph() {
+  const { width: screenWidth } = useWindowDimensions();
+  const { isTablet } = useResponsive();
+  const chartWidth = isTablet ? Math.min(screenWidth - 120, 520) : screenWidth - 80;
+
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,8 +45,8 @@ export default function MoodTrendGraph() {
       const result = await response.json();
       if (result.success && Array.isArray(result.data)) {
         // Sort ascending chronologically
-        const sorted = result.data.sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+        const sorted = [...result.data].sort(
+          (a, b) => a.date.localeCompare(b.date)
         );
         setHistory(sorted);
       }
@@ -137,7 +140,7 @@ export default function MoodTrendGraph() {
               },
             ],
           }}
-          width={screenWidth - 80}
+          width={chartWidth}
           height={200}
           bezier
           withShadow={false}

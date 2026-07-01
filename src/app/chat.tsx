@@ -16,6 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFonts } from "expo-font";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import { scrubHealthContent } from "./utils/healthComplianceFilter";
 
 type ChatMessage = {
   id: string;
@@ -90,12 +91,13 @@ export default function WombCareChatUI() {
       const result = await response.json();
 
       if (result.success && result.message) {
+        const cleanMessage = scrubHealthContent(result.message);
         setMessages((prev) => [
           ...prev,
           {
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content: result.message,
+            content: cleanMessage,
           },
         ]);
       } else {
@@ -187,6 +189,14 @@ export default function WombCareChatUI() {
             </TouchableOpacity>
           </View>
         </LinearGradient>
+
+        {/* Sticky Medical Disclaimer Banner */}
+        <View style={styles.disclaimerBanner}>
+          <Ionicons name="information-circle" size={14} color="#D53F8C" />
+          <Text style={styles.disclaimerBannerText}>
+            WombCare AI offers wellness suggestions, not medical diagnoses. Consult a doctor for clinical care.
+          </Text>
+        </View>
 
         {/* Message Stream */}
         <ScrollView
@@ -486,5 +496,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#E2E8F0",
     shadowOpacity: 0,
     elevation: 0,
+  },
+  disclaimerBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF0F6",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE3EE",
+    gap: 8,
+  },
+  disclaimerBannerText: {
+    flex: 1,
+    fontSize: 10,
+    color: "#D53F8C",
+    fontFamily: "PoppinsMedium",
+    lineHeight: 14,
   },
 });

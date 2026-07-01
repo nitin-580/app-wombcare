@@ -144,7 +144,7 @@ export default function ClassesScreen() {
 
 
 <YoutubePlayer
-  videoId="CqtlcsxK2Xw"
+  videoId="SLBlfumkDXc"
 />
 
 

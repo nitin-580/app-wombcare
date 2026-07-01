@@ -22,7 +22,10 @@ import {
   Ionicons,
 } from "@expo/vector-icons";
 
+import { useResponsive } from "../../../utils/responsive";
+
 export default function ForgotPasswordScreen() {
+  const { responsiveContainerStyle } = useResponsive();
 
   const [step, setStep] =
     useState<
@@ -79,7 +82,7 @@ export default function ForgotPasswordScreen() {
 
       const response = await fetch(
 
-        "https://womb-care-backend-76858014616.us-central1.run.app/api/auth/forgot-password",
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/auth/forgot-password",
 
         {
 
@@ -136,7 +139,7 @@ export default function ForgotPasswordScreen() {
 
       const response = await fetch(
 
-        "https://womb-care-backend-76858014616.us-central1.run.app/api/auth/verify-otp",
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/auth/verify-otp",
 
         {
 
@@ -199,7 +202,7 @@ export default function ForgotPasswordScreen() {
 
       const response = await fetch(
 
-        "https://womb-care-backend-76858014616.us-central1.run.app/api/auth/reset-password",
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/auth/reset-password",
 
         {
 
@@ -261,6 +264,10 @@ export default function ForgotPasswordScreen() {
 
     <SafeAreaView style={styles.container}>
 
+      {/* Glowing Brand Aesthetic Circles */}
+      <View style={styles.glowingBlobPink} />
+      <View style={styles.glowingBlobPurple} />
+
       <KeyboardAvoidingView
 
         style={{ flex: 1 }}
@@ -306,7 +313,7 @@ export default function ForgotPasswordScreen() {
 
           {/* CARD */}
 
-          <View style={styles.card}>
+          <View style={[styles.card, responsiveContainerStyle]}>
 
             <Text style={styles.title}>
 
@@ -574,7 +581,28 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F8F4FF",
+    overflow: "hidden",
+  },
+  glowingBlobPink: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "#FFE5EF",
+    opacity: 0.6,
+  },
+  glowingBlobPurple: {
+    position: "absolute",
+    bottom: -80,
+    left: -80,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "#EEE9FF",
+    opacity: 0.6,
   },
 
   topSection: {
@@ -613,7 +641,7 @@ const styles = StyleSheet.create({
 
   logo: {
     fontSize: 22,
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsBold",
   },
 
@@ -626,15 +654,10 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
-    backgroundColor: "white",
-
-    borderTopLeftRadius: 38,
-    borderTopRightRadius: 38,
-
+    backgroundColor: "transparent",
     paddingHorizontal: 28,
     paddingTop: 32,
     paddingBottom: 30,
-
     marginTop: 12,
   },
 
@@ -678,7 +701,7 @@ const styles = StyleSheet.create({
 
   button: {
     height: 58,
-    backgroundColor: "#6B8DE3",
+    backgroundColor: "#7C5CFF",
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
@@ -700,14 +723,14 @@ const styles = StyleSheet.create({
   },
 
   loginText: {
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsSemiBold",
   },
 
   resendText: {
     marginTop: 20,
     textAlign: "center",
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontSize: 14,
     fontFamily: "PoppinsSemiBold",
   },

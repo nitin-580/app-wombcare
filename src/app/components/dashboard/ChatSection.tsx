@@ -63,16 +63,16 @@ export default function AIHealthAssistantCard() {
   // Preset question chips
   const PRESET_QUESTIONS = language === "english" 
     ? [
-        { label: "PCOD Weight Gain 🥗", text: "How to manage PCOD weight gain naturally?" },
-        { label: "Irregular Periods 🌸", text: "What causes irregular periods and how to treat it?" },
-        { label: "Can I Conceive? 👶", text: "Can I conceive naturally with PCOS?" },
-        { label: "WombCare Plans 💳", text: "What are the WombCare plans, pricing and benefits?" }
+        { label: "PCOD Weight Gain ", text: "How to manage PCOD weight gain naturally?" },
+        { label: "Irregular Periods ", text: "What causes irregular periods and how to treat it?" },
+        { label: "Can I Conceive? ", text: "Can I conceive naturally with PCOS?" },
+        { label: "WombCare Plans ", text: "What are the WombCare plans, pricing and benefits?" }
       ]
     : [
-        { label: "Weight Kaise Kam Karein? 🥗", text: "PCOD mein weight control kaise karein?" },
-        { label: "Periods Time Par Kaise Layein? 🌸", text: "Irregular periods thik karne ke tips batayein." },
-        { label: "Kya Main Conceive Kar Sakti Hoon? 👶", text: "PCOS ke sath conceiving ke liye best plan kya hai?" },
-        { label: "WombCare Plans pricing? 💳", text: "WombCare plans aur price details batayein." }
+        { label: "Weight Kaise Kam Karein? ", text: "PCOD mein weight control kaise karein?" },
+        { label: "Periods Time Par Kaise Layein? ", text: "Irregular periods thik karne ke tips batayein." },
+        { label: "Kya Main Conceive Kar Sakti Hoon? ", text: "PCOS ke sath conceiving ke liye best plan kya hai?" },
+        { label: "WombCare Plans pricing? ", text: "WombCare plans aur price details batayein." }
       ];
 
   // Send message to WombCare Express AI endpoint
@@ -133,8 +133,8 @@ export default function AIHealthAssistantCard() {
             id: (Date.now() + 1).toString(),
             role: "assistant",
             content: language === "english"
-              ? "⚠️ I encountered a temporary connection issue. Please try again in a moment! 🌸"
-              : "⚠️ Server response mein problem aayi hai. Kripya thodi der baad dobara try karein! 🌸",
+              ? "⚠️ I encountered a temporary connection issue. Please try again in a moment! "
+              : "⚠️ Server response mein problem aayi hai. Kripya thodi der baad dobara try karein! ",
           },
         ]);
       }
@@ -174,7 +174,7 @@ export default function AIHealthAssistantCard() {
             onPress={() => setModalVisible(true)}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>Start Conversation 🌸</Text>
+            <Text style={styles.buttonText}>Start Conversation </Text>
           </TouchableOpacity>
         </View>
 
@@ -205,7 +205,7 @@ export default function AIHealthAssistantCard() {
                 <Ionicons name="chevron-back" size={26} color="white" />
               </TouchableOpacity>
               <View style={styles.headerInfo}>
-                <Text style={styles.headerTitle}>WombCare AI ✨</Text>
+                <Text style={styles.headerTitle}>WombCare Assitant</Text>
                 <Text style={styles.headerSub}>Empathetic PCOD Companion</Text>
               </View>
               <TouchableOpacity 
@@ -304,7 +304,7 @@ export default function AIHealthAssistantCard() {
             {/* Quick preset chips - show when chat is short */}
             {messages.length <= 2 && !loadingAI && (
               <View style={styles.presetsWrapper}>
-                <Text style={styles.presetsHeading}>Tap a topic to start instantly: 🌸</Text>
+                <Text style={styles.presetsHeading}>Tap a topic to start instantly: </Text>
                 <View style={styles.presetChipsGrid}>
                   {PRESET_QUESTIONS.map((chip, index) => (
                     <TouchableOpacity

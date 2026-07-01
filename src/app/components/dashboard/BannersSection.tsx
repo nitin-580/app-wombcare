@@ -5,18 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH - 40; // 20px padding on each side
+import { useResponsive } from "../../../utils/responsive";
 
 interface Banner {
   id: string;
@@ -44,6 +43,10 @@ const FALLBACK_BANNERS: Banner[] = [
 ];
 
 export default function BannersSection() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { isTablet } = useResponsive();
+  const CARD_WIDTH = isTablet ? Math.min(SCREEN_WIDTH - 40, 500) : SCREEN_WIDTH - 40;
+
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -123,7 +126,7 @@ export default function BannersSection() {
           <TouchableOpacity
             key={banner.id}
             activeOpacity={0.9}
-            style={styles.cardContainer}
+            style={[styles.cardContainer, { width: CARD_WIDTH }]}
             onPress={() => handleBannerPress(banner.targetUrl)}
           >
             <View style={styles.card}>
@@ -209,7 +212,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardContainer: {
-    width: CARD_WIDTH,
     height: 180,
     paddingRight: 8,
   },

@@ -2,6 +2,8 @@ import React, { useState, useCallback } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import MedicalDisclaimerModal from "./components/common/MedicalDisclaimerModal";
 
 import LegendRow from "./components/cycleTracker/LegendRow";
 import LogPeriodButton from "./components/cycleTracker/LogPeriodButton";
@@ -15,10 +17,23 @@ import SkeletonLoader from "./components/common/SkeletonLoader";
 export default function CycleScreen() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   // Automatically refresh and show skeleton loader when screen focused or navigated to
   useFocusEffect(
     useCallback(() => {
+      const checkDisclaimer = async () => {
+        try {
+          const accepted = await AsyncStorage.getItem("disclaimerAccepted");
+          if (accepted !== "true") {
+            setShowDisclaimer(true);
+          }
+        } catch (e) {
+          console.error("Error checking disclaimer in cycle screen:", e);
+        }
+      };
+      checkDisclaimer();
+
       setLoading(true);
       setRefreshKey((prev) => prev + 1);
       const timer = setTimeout(() => {
@@ -52,6 +67,7 @@ export default function CycleScreen() {
         <PeriodMetricsCard />
         
       </ScrollView>
+      <MedicalDisclaimerModal visible={showDisclaimer} onAccept={() => setShowDisclaimer(false)} />
     </SafeAreaView>
   );
 }

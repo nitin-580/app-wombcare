@@ -30,9 +30,10 @@ import React, {
     Ionicons,
   } from "@expo/vector-icons";
   
-  import {
-    useFonts,
-  } from "expo-font";
+  import { useFonts } from "expo-font";
+  import * as WebBrowser from "expo-web-browser";
+  import MedicalDisclaimerModal from "./components/common/MedicalDisclaimerModal";
+  import { useResponsive } from "../utils/responsive";
   
   const symptomOptions = [
   
@@ -54,6 +55,7 @@ import React, {
   ];
   
   export default function OnboardingScreen() {
+    const { responsiveContainerStyle } = useResponsive();
   
     /* ---------------- STEP ---------------- */
   
@@ -61,6 +63,9 @@ import React, {
       useState(1);
   
     const totalSteps = 3;
+
+    const [isConsentChecked, setIsConsentChecked] = useState(false);
+    const [showDisclaimer, setShowDisclaimer] = useState(false);
   
     /* ---------------- FORM ---------------- */
   
@@ -199,6 +204,16 @@ import React, {
 async () => {
 
   try {
+    if (!isConsentChecked) {
+      setError("Please check the consent box to accept the Privacy Policy & Data Collection terms.");
+      return;
+    }
+
+    const accepted = await AsyncStorage.getItem("disclaimerAccepted");
+    if (accepted !== "true") {
+      setShowDisclaimer(true);
+      return;
+    }
 
     setLoading(true);
 
@@ -419,7 +434,7 @@ async () => {
   
         <SafeAreaView style={styles.container}>
   
-          <View style={styles.successContainer}>
+          <View style={[styles.successContainer, responsiveContainerStyle]}>
   
             <View style={styles.successCircle}>
   
@@ -464,11 +479,7 @@ async () => {
             showsVerticalScrollIndicator={false}
           >
   
-            {/* TOP */}
-  
-            <View style={styles.topSection}>
-  
-  
+            <View style={[styles.topSection, responsiveContainerStyle]}>
               <Text style={styles.stepText}>
                 Step {step} of {totalSteps}
               </Text>
@@ -503,7 +514,7 @@ async () => {
   
             {/* CARD */}
   
-            <View style={styles.card}>
+            <View style={[styles.card, responsiveContainerStyle]}>
   
               {error ? (
   
@@ -839,6 +850,22 @@ async () => {
   
                   </View>
   
+                  {/* Privacy Consent Checkbox */}
+                  <TouchableOpacity
+                    style={styles.consentContainer}
+                    activeOpacity={0.8}
+                    onPress={() => setIsConsentChecked(!isConsentChecked)}
+                  >
+                    <View style={[styles.consentCheckbox, isConsentChecked && styles.consentCheckboxChecked]}>
+                      {isConsentChecked && <Ionicons name="checkmark" size={14} color="white" />}
+                    </View>
+                    <Text style={styles.consentLabel}>
+                      I consent to WombCare collecting and processing my cycle data and wellness logs in accordance with the{" "}
+                      <Text style={styles.consentLink} onPress={() => WebBrowser.openBrowserAsync("https://wombcare.live/privacy")}>
+                        Privacy Policy
+                      </Text>.
+                    </Text>
+                  </TouchableOpacity>
                 </>
               )}
   
@@ -881,9 +908,10 @@ async () => {
   
                   <TouchableOpacity
   
-                    style={styles.nextButton}
+                    style={[styles.nextButton, !isConsentChecked && styles.nextButtonDisabled]}
   
                     onPress={handleSubmit}
+                    disabled={!isConsentChecked || loading}
                   >
   
                     {loading ? (
@@ -910,7 +938,7 @@ async () => {
           </ScrollView>
   
         </KeyboardAvoidingView>
-  
+        <MedicalDisclaimerModal visible={showDisclaimer} onAccept={handleSubmit} />
       </SafeAreaView>
     );
   }
@@ -1169,5 +1197,44 @@ async () => {
       lineHeight: 24,
       fontFamily: "PoppinsRegular",
     },
-  
+    consentContainer: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      backgroundColor: "#F9FAFB",
+      padding: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: "#E5E7EB",
+      marginTop: 20,
+      marginBottom: 10,
+    },
+    consentCheckbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: "#FF5CA8",
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 10,
+      marginTop: 2,
+    },
+    consentCheckboxChecked: {
+      backgroundColor: "#FF5CA8",
+    },
+    consentLabel: {
+      flex: 1,
+      fontSize: 12,
+      color: "#4B5563",
+      fontFamily: "PoppinsRegular",
+      lineHeight: 18,
+    },
+    consentLink: {
+      color: "#FF5CA8",
+      fontFamily: "PoppinsSemiBold",
+      textDecorationLine: "underline",
+    },
+    nextButtonDisabled: {
+      backgroundColor: "#E5E7EB",
+    },
   });

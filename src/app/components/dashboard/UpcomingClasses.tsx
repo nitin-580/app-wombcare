@@ -220,18 +220,16 @@ export default function UpcomingClassesCard({ refreshing }: { refreshing?: boole
       >
         {/* Placement Badge */}
         <View style={styles.badgeRow}>
-          <View style={styles.placementBadge}>
-            <Text style={styles.placementBadgeText}>{placement.label} Widget</Text>
-          </View>
+          
 
           {/* Active status indicator badge */}
           {isJoinActive ? (
             <View style={[styles.statusBadge, styles.activeBadge]}>
-              <Text style={styles.statusBadgeText}>✅ JOIN ACTIVATED</Text>
+              <Text style={styles.statusBadgeText}>JOIN ACTIVATED</Text>
             </View>
           ) : (
             <View style={[styles.statusBadge, styles.inactiveBadge]}>
-              <Text style={[styles.statusBadgeText, styles.inactiveBadgeText]}>🚫 JOIN DEACTIVATED</Text>
+              <Text style={[styles.statusBadgeText, styles.inactiveBadgeText]}>JOIN DEACTIVATED</Text>
             </View>
           )}
         </View>
@@ -313,14 +311,14 @@ export default function UpcomingClassesCard({ refreshing }: { refreshing?: boole
                 style={styles.joinButton}
                 onPress={() => Linking.openURL(cls.googleMeetLink!)}
               >
-                <Text style={styles.joinButtonText}>Join Class 🌸</Text>
+                <Text style={styles.joinButtonText}>Join Class </Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={[styles.joinButton, { backgroundColor: "#111" }]}
                 onPress={() => handleCardPress(cls)}
               >
-                <Text style={styles.joinButtonText}>Watch Class 📺</Text>
+                <Text style={styles.joinButtonText}>Watch Class </Text>
               </TouchableOpacity>
             )
           ) : (

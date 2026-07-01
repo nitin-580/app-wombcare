@@ -4,18 +4,19 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { useFonts } from "expo-font";
-
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH - 40;
-
+import { useResponsive } from "../../../utils/responsive";
 export default function TestimonialsSection() {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
+  const { isTablet } = useResponsive();
+  const CARD_WIDTH = isTablet ? Math.min(SCREEN_WIDTH - 40, 500) : SCREEN_WIDTH - 40;
+
   const [fontsLoaded] = useFonts({
     PoppinsRegular: require("../../../assets/fonts/Poppins-Regular.ttf"),
     PoppinsSemiBold: require("../../../assets/fonts/Poppins-SemiBold.ttf"),
@@ -43,7 +44,7 @@ export default function TestimonialsSection() {
 
       <TouchableOpacity
         activeOpacity={0.9}
-        style={styles.cardContainer}
+        style={[styles.cardContainer, { width: CARD_WIDTH, alignSelf: isTablet ? "center" : "auto" }]}
         onPress={handleVideoPress}
       >
         <View style={styles.card}>
@@ -111,7 +112,6 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinsSemiBold",
   },
   cardContainer: {
-    width: CARD_WIDTH,
     height: 200,
   },
   card: {

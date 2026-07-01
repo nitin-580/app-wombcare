@@ -13,7 +13,10 @@ import {
   TextInput,
   Alert,
   Platform,
+  Share,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import MedicalDisclaimerModal from "./components/common/MedicalDisclaimerModal";
 
 import {
   SafeAreaView,
@@ -48,6 +51,11 @@ export default function ProfileScreen() {
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedAvatarId, setSelectedAvatarId] = useState<string>("1");
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string>("");
+
+  // Compliance Center States
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
@@ -260,6 +268,116 @@ export default function ProfileScreen() {
     );
   };
 
+  // Export User Health & Cycle Tracking Data (JSON format via Share sheet)
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      const token = await AsyncStorage.getItem("userToken");
+      
+      // Fetch Period History dynamically as it is not cached on profile page
+      const periodResp = await fetch(
+        `https://womb-care-backend-76858014616.europe-west1.run.app/api/profiles/${userId}/period/history`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const periodData = await periodResp.json();
+      const periods = periodData.success ? periodData.data : [];
+
+      const exportObject = {
+        app: "WombCare",
+        exportedAt: new Date().toISOString(),
+        userProfile: profile || {},
+        dailyTrackingLogs: history || [],
+        periodCycles: periods,
+      };
+
+      const jsonString = JSON.stringify(exportObject, null, 2);
+
+      await Share.share({
+        title: "WombCare Health Data Export",
+        message: jsonString,
+      });
+
+      Alert.alert("Success", "Your wellness data has been compiled and is ready to share! 🌸");
+    } catch (err: any) {
+      console.log("Error exporting data:", err);
+      Alert.alert("Export Failed", err.message || "Failed to compile your wellness data.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Permanently Purge User Account and sensitive health data from database
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "⚠️ Delete Account & Data Permanently",
+      "This action is permanent and cannot be undone. All your health history, menstrual cycles, symptom logs, personal reflections, and profile information will be permanently purged from WombCare's servers.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Permanently Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              
+              // 1. Delete Daily Logs history
+              const res1 = await supabase.from("wombcare_user_profile_history").delete().eq("user_id", userId);
+              
+              // 2. Delete Period Cycles history
+              const res2 = await supabase.from("wombcare_period_history").delete().eq("user_id", userId);
+              
+              // 3. Delete Live chats
+              const res3 = await supabase.from("wombcare_live_chats").delete().eq("user_id", userId);
+              
+              // 4. Delete Appointments
+              const res4 = await supabase.from("wombcare_appointments").delete().eq("user_id", userId);
+
+              // 5. Delete Class attendance
+              const resAttendance = await supabase.from("wombcare_class_attendance").delete().eq("user_id", userId);
+              
+              // 6. Delete Profile
+              const res5 = await supabase.from("wombcare_user_profiles").delete().eq("id", userId);
+              
+              // 7. Delete Credentials
+              const res6 = await supabase.from("users").delete().eq("id", userId);
+
+              if (res1.error) console.log("Del history err:", res1.error);
+              if (res2.error) console.log("Del period err:", res2.error);
+              if (res3.error) console.log("Del chat err:", res3.error);
+              if (res4.error) console.log("Del appt err:", res4.error);
+              if (resAttendance.error) console.log("Del attendance err:", resAttendance.error);
+              if (res5.error) console.log("Del profile err:", res5.error);
+              if (res6.error) console.log("Del credentials err:", res6.error);
+
+              // Clear AsyncStorage and redirect
+              await AsyncStorage.clear();
+
+              Alert.alert(
+                "Account Purged",
+                "Your account and all associated health data have been successfully deleted from WombCare. Thank you for using WombCare. 🌸",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      router.replace("/(auth)");
+                    },
+                  },
+                ]
+              );
+            } catch (err: any) {
+              console.log("Error deleting account:", err);
+              Alert.alert("Deletion Failed", err.message || "Failed to purge database records.");
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // Calculate Averages from real tracker history
   const sleepRecords = history.filter(
     (h) => typeof h.sleep === "number" && h.sleep > 0
@@ -376,6 +494,78 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Compliance Center - Privacy & Safety */}
+        <View style={styles.complianceCard}>
+          <Text style={styles.sectionTitle}>Privacy & Safety 🛡️</Text>
+          <Text style={styles.sectionSubtitle}>Manage your health data and compliance settings</Text>
+
+          <View style={styles.complianceList}>
+            {/* Disclaimer Row */}
+            <TouchableOpacity 
+              style={styles.complianceRow} 
+              onPress={() => setShowDisclaimer(true)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.rowLabelGroup}>
+                <Ionicons name="document-text-outline" size={20} color="#FF5CA8" style={styles.rowIcon} />
+                <Text style={styles.rowText}>Medical Disclaimer</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#A0AEC0" />
+            </TouchableOpacity>
+
+            {/* Privacy Policy Row */}
+            <TouchableOpacity 
+              style={styles.complianceRow} 
+              onPress={() => WebBrowser.openBrowserAsync("https://wombcare.in/privacy-policy")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.rowLabelGroup}>
+                <Ionicons name="shield-checkmark-outline" size={20} color="#FF5CA8" style={styles.rowIcon} />
+                <Text style={styles.rowText}>Privacy Policy</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#A0AEC0" />
+            </TouchableOpacity>
+
+            {/* Export Data Row */}
+            <TouchableOpacity 
+              style={styles.complianceRow} 
+              onPress={handleExportData}
+              activeOpacity={0.7}
+              disabled={isExporting}
+            >
+              <View style={styles.rowLabelGroup}>
+                {isExporting ? (
+                  <ActivityIndicator size="small" color="#FF5CA8" style={styles.rowIcon} />
+                ) : (
+                  <Ionicons name="download-outline" size={20} color="#FF5CA8" style={styles.rowIcon} />
+                )}
+                <Text style={styles.rowText}>{isExporting ? "Compiling Data..." : "Export My Health Data"}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#A0AEC0" />
+            </TouchableOpacity>
+
+            {/* Delete Account Row */}
+            <TouchableOpacity 
+              style={[styles.complianceRow, styles.lastRow]} 
+              onPress={handleDeleteAccount}
+              activeOpacity={0.7}
+              disabled={isDeleting}
+            >
+              <View style={styles.rowLabelGroup}>
+                {isDeleting ? (
+                  <ActivityIndicator size="small" color="#E53E3E" style={styles.rowIcon} />
+                ) : (
+                  <Ionicons name="trash-outline" size={20} color="#E53E3E" style={styles.rowIcon} />
+                )}
+                <Text style={[styles.rowText, { color: "#E53E3E" }]}>
+                  {isDeleting ? "Purging Account..." : "Delete Account & Data"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#E53E3E" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Dynamic Card 3: Logout options container */}
         <TouchableOpacity 
           style={styles.logoutButton}
@@ -476,7 +666,7 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-
+      <MedicalDisclaimerModal visible={showDisclaimer} forceShow={true} onClose={() => setShowDisclaimer(false)} />
     </SafeAreaView>
   );
 }
@@ -781,5 +971,50 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     fontFamily: "PoppinsBold",
+  },
+  complianceCard: {
+    backgroundColor: "white",
+    borderRadius: 28,
+    padding: 24,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
+  },
+  complianceList: {
+    marginTop: 16,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    overflow: "hidden",
+  },
+  complianceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  rowLabelGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  rowIcon: {
+    marginRight: 12,
+  },
+  rowText: {
+    fontSize: 13,
+    fontFamily: "PoppinsSemiBold",
+    color: "#2D3748",
   },
 });

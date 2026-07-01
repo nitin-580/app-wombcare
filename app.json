@@ -2,51 +2,61 @@
   "expo": {
     "name": "WombCare",
     "slug": "wombcare",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "version": "1.0.1",
+    "orientation": "default",
     "icon": "./src/assets/images/icon.png",
     "scheme": "wombcare",
     "userInterfaceStyle": "light",
+
     "android": {
       "package": "com.wombcare.app",
+      "versionCode": 2,
+      "orientation": "portrait",
       "permissions": [
         "INTERNET"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#FFF0F6",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
+        "foregroundImage": "./src/assets/images/icon.png",
+        "backgroundColor": "#FFF0F6"
       },
       "predictiveBackGestureEnabled": false
     },
+
     "ios": {
       "bundleIdentifier": "com.wombcare.app",
+      "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./src/assets/images/icon.png"
     },
+
     "plugins": [
       "expo-router",
+
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFF0F6",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 140
-          }
+          "image": "./src/assets/images/icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFF0F6"
         }
       ],
+
       "expo-font",
       "expo-web-browser"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
       "router": {},
       "eas": {

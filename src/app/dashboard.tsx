@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   Animated,
   ActivityIndicator,
+  Modal,
 } from "react-native";
+import DietScreen from "./screens/DietScreen";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,8 +31,11 @@ import InsightCard from "./components/dashboard/InsightsCard";
 import TestimonialsSection from "./components/dashboard/Testimonials";
 import SkeletonLoader from "./components/common/SkeletonLoader";
 import FooterBrandCard from "./components/common/FooterBrandCard";
+import { scrubTerminology } from "./utils/healthComplianceFilter";
+import { useResponsive } from "../utils/responsive";
 
 export default function Dashboard() {
+  const { responsiveContainerStyle } = useResponsive();
   const navigation = useNavigation();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -38,6 +43,8 @@ export default function Dashboard() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [profile, setProfile] = useState<any>(null);
+  const [dietPlan, setDietPlan] = useState<any>(null);
+  const [isDietViewOpen, setIsDietViewOpen] = useState(false);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [dynamicInsights, setDynamicInsights] = useState<any[]>([
     {
@@ -76,6 +83,24 @@ export default function Dashboard() {
       const data = await response.json();
       if (data.success) {
         setProfile(data.data);
+        
+        // Fetch diet plan
+        try {
+          const dietResp = await fetch(
+            `https://womb-care-backend-76858014616.europe-west1.run.app/api/diet-plans/user/${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const dietData = await dietResp.json();
+          if (dietData.success) {
+            setDietPlan(dietData.data);
+          }
+        } catch (dietErr) {
+          console.log("DIET PLAN FETCH ERROR:", dietErr);
+        }
 
         // Fetch dynamic AI insights using Llama 3.3
         try {
@@ -93,7 +118,11 @@ export default function Dashboard() {
           );
           const insightsData = await insightsResp.json();
           if (insightsData.success && Array.isArray(insightsData.insights)) {
-            setDynamicInsights(insightsData.insights);
+            const cleanInsights = insightsData.insights.map((insight: any) => ({
+              ...insight,
+              text: scrubTerminology(insight.text),
+            }));
+            setDynamicInsights(cleanInsights);
           }
         } catch (aiErr) {
           console.log("AI INSIGHTS API ERROR:", aiErr);
@@ -248,7 +277,7 @@ export default function Dashboard() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+        contentContainerStyle={[{ paddingHorizontal: 20, paddingBottom: 40 }, responsiveContainerStyle]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -263,6 +292,35 @@ export default function Dashboard() {
         <HealthScoreCard />
 
         <WellnessStatsCards />
+
+        {/* Recommended Diet Plan Card */}
+        {dietPlan && (
+          <TouchableOpacity 
+            style={styles.dietCardContainer} 
+            onPress={() => setIsDietViewOpen(true)}
+            activeOpacity={0.9}
+          >
+            <View style={styles.dietCardContent}>
+              <View style={styles.dietBadgeRow}>
+                <View style={styles.dietTag}>
+                  <Text style={styles.dietTagText}>Recommended Diet Plan</Text>
+                </View>
+                <Ionicons name="sparkles" size={14} color="#FFE5F1" />
+              </View>
+              
+              <Text style={styles.dietCardTitle}>{dietPlan.name || "PCOD + UC Diet Plan"}</Text>
+              
+              <View style={styles.dietFooterRow}>
+                <Text style={styles.dietCardDesc} numberOfLines={1}>
+                  {dietPlan.description || "Hormonal Balance • Gut Healing • Healthy Weight"}
+                </Text>
+                <View style={styles.openDietBadge}>
+                  <Text style={styles.openDietBadgeText}>View 🥗</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
 
         <EnergyLevelsCard />
 
@@ -284,11 +342,32 @@ export default function Dashboard() {
           />
         ))}
 
+        {/* Dynamic Insights Footnote Disclaimer */}
+        <Text style={styles.insightsDisclaimer}>
+          *Disclaimer: Insights are AI-generated wellness tips, not medical advice. Always consult a healthcare professional for clinical concerns.*
+        </Text>
+
         <FooterBrandCard
           hashtag="#goWombCare"
           title1="🌸 Built for Women"
         />
       </ScrollView>
+
+      {/* Diet Plan Screen Modal overlay */}
+      {dietPlan && (
+        <Modal
+          visible={isDietViewOpen}
+          animationType="slide"
+          onRequestClose={() => setIsDietViewOpen(false)}
+        >
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#FAF8FC' }}>
+            <DietScreen 
+              dietPlan={dietPlan} 
+              onBack={() => setIsDietViewOpen(false)} 
+            />
+          </SafeAreaView>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -371,5 +450,80 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "white",
     fontWeight: "600",
+  },
+  insightsDisclaimer: {
+    fontSize: 10,
+    color: "#A0AEC0",
+    fontStyle: "italic",
+    textAlign: "center",
+    marginHorizontal: 20,
+    marginBottom: 20,
+    lineHeight: 14,
+    fontFamily: "PoppinsRegular",
+  },
+  dietCardContainer: {
+    backgroundColor: '#8F55FF',
+    borderRadius: 24,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 8,
+    shadowColor: '#8F55FF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  dietCardContent: {
+    gap: 8,
+  },
+  dietBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dietTag: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  dietTagText: {
+    color: '#FFE5F1',
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dietCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  dietFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  dietCardDesc: {
+    color: '#EFE5FC',
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1,
+    marginRight: 10,
+  },
+  openDietBadge: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  openDietBadgeText: {
+    color: '#8F55FF',
+    fontSize: 10,
+    fontWeight: '800',
   },
 });

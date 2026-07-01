@@ -92,10 +92,11 @@ export default function EnergyLevelsCard() {
           result.success &&
           Array.isArray(result.data)
         ) {
-
-          setHistory(
-            result.data
+          const sorted = [...result.data].sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
           );
+          const last7Days = sorted.slice(-7);
+          setHistory(last7Days);
         }
 
       } catch (err) {
@@ -179,6 +180,13 @@ export default function EnergyLevelsCard() {
         )
       );
     };
+
+  const getEnergyLabel = (score: number) => {
+    if (score >= 80) return "Vibrant";
+    if (score >= 60) return "Steady";
+    if (score >= 40) return "Moderate";
+    return "Resting";
+  };
 
   if (!fontsLoaded || loading) {
 
@@ -286,7 +294,7 @@ export default function EnergyLevelsCard() {
               getEnergyScore(item);
 
             const active =
-              score >= 75;
+              score >= 80;
 
             return (
 
@@ -316,7 +324,7 @@ export default function EnergyLevelsCard() {
                 />
 
                 <Text style={styles.scoreText}>
-                  {score}
+                  {getEnergyLabel(score)}
                 </Text>
 
                 <Text style={styles.label}>
@@ -373,8 +381,8 @@ export default function EnergyLevelsCard() {
                 </Text>
 
                 <Text style={styles.modalEnergy}>
-                  Energy Score:{" "}
-                  {getEnergyScore(selectedDay)}
+                  Energy Level:{" "}
+                  {getEnergyLabel(getEnergyScore(selectedDay))}
                 </Text>
 
               </>
@@ -505,11 +513,11 @@ const styles = StyleSheet.create({
 
     marginTop: 8,
 
-    fontSize: 11,
+    fontSize: 8,
 
     color: "#444",
 
-    fontFamily: "PoppinsSemiBold",
+    fontFamily: "PoppinsRegular",
   },
 
   emptyContainer: {

@@ -26,8 +26,14 @@ import {
 import {
   Ionicons,
 } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
+
+import { useResponsive } from "../../../utils/responsive";
 
 export default function SignupScreen() {
+  const { responsiveContainerStyle } = useResponsive();
+
+  const [isConsentChecked, setIsConsentChecked] = useState(false);
 
   const [name, setName] =
     useState("");
@@ -88,10 +94,14 @@ export default function SignupScreen() {
 
       setSuccess("");
 
+      if (!isConsentChecked) {
+        setError("Please check the consent box to accept the Privacy Policy & Data Collection terms.");
+        return;
+      }
+
       if (
         !name ||
         !email ||
-        !phone ||
         !password ||
         !confirmPassword
       ) {
@@ -127,7 +137,7 @@ export default function SignupScreen() {
 
       const response = await fetch(
 
-        "https://womb-care-backend-76858014616.us-central1.run.app/api/doctors/signup",
+        "https://womb-care-backend-76858014616.europe-west1.run.app/api/doctors/signup",
 
         {
 
@@ -236,7 +246,11 @@ export default function SignupScreen() {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: "#F8F4FF" }]}>
+
+      {/* Glowing Brand Aesthetic Circles */}
+      <View style={styles.glowingBlobPink} />
+      <View style={styles.glowingBlobPurple} />
 
       <KeyboardAvoidingView
 
@@ -260,7 +274,7 @@ export default function SignupScreen() {
 
           {/* CARD */}
 
-          <View style={styles.card}>
+          <View style={[styles.card, responsiveContainerStyle]}>
 
             {/* TABS */}
 
@@ -330,12 +344,12 @@ export default function SignupScreen() {
             <View style={styles.inputContainer}>
 
               <Text style={styles.label}>
-                Phone Number
+                Phone Number (Optional)
               </Text>
 
               <TextInput
 
-                placeholder="+91 XXXXX XXXXX"
+                placeholder="+91 XXXXX XXXXX (optional)"
 
                 placeholderTextColor="#999"
 
@@ -499,15 +513,33 @@ export default function SignupScreen() {
 
             ) : null}
 
+            {/* Privacy Policy and Health Data tracking consent */}
+            <TouchableOpacity
+              style={styles.consentContainer}
+              activeOpacity={0.8}
+              onPress={() => setIsConsentChecked(!isConsentChecked)}
+            >
+              <View style={[styles.consentCheckbox, isConsentChecked && styles.consentCheckboxChecked]}>
+                {isConsentChecked && <Ionicons name="checkmark" size={14} color="white" />}
+              </View>
+              <Text style={styles.consentLabel}>
+                I agree to the WombCare{" "}
+                <Text style={styles.consentLink} onPress={() => WebBrowser.openBrowserAsync("https://wombcare.live/privacy")}>
+                  Privacy Policy
+                </Text>{" "}
+                and consent to the collection of my cycle and health data for tracking.
+              </Text>
+            </TouchableOpacity>
+
             {/* BUTTON */}
 
             <TouchableOpacity
 
-              style={styles.button}
+              style={[styles.button, !isConsentChecked && styles.buttonDisabled]}
 
               onPress={handleSignup}
 
-              disabled={isLoading}
+              disabled={isLoading || !isConsentChecked}
             >
 
               {isLoading ? (
@@ -561,7 +593,28 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F8F4FF",
+    overflow: "hidden",
+  },
+  glowingBlobPink: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: "#FFE5EF",
+    opacity: 0.6,
+  },
+  glowingBlobPurple: {
+    position: "absolute",
+    bottom: -80,
+    left: -80,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "#EEE9FF",
+    opacity: 0.6,
   },
 
   topSection: {
@@ -577,7 +630,7 @@ const styles = StyleSheet.create({
 
   logo: {
     fontSize: 14,
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsRegular",
   },
 
@@ -590,9 +643,7 @@ const styles = StyleSheet.create({
 
   card: {
     flex: 1,
-    backgroundColor: "white",
-    borderTopLeftRadius: 38,
-    borderTopRightRadius: 38,
+    backgroundColor: "transparent",
     paddingHorizontal: 28,
     paddingTop: 28,
     paddingBottom: 30,
@@ -608,7 +659,7 @@ const styles = StyleSheet.create({
 
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: "#6B8DE3",
+    borderBottomColor: "#7C5CFF",
     paddingBottom: 8,
     minWidth: 90,
     alignItems: "center",
@@ -616,7 +667,7 @@ const styles = StyleSheet.create({
 
   activeTabText: {
     fontSize: 17,
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsBold",
   },
 
@@ -670,7 +721,7 @@ const styles = StyleSheet.create({
 
   button: {
     height: 58,
-    backgroundColor: "#6B8DE3",
+    backgroundColor: "#7C5CFF",
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
@@ -692,7 +743,7 @@ const styles = StyleSheet.create({
   },
 
   signupText: {
-    color: "#6B8DE3",
+    color: "#7C5CFF",
     fontFamily: "PoppinsSemiBold",
   },
 
@@ -711,5 +762,45 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "PoppinsMedium",
   },
-
+  consentContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#F9FAFB",
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  consentCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#7C5CFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+    marginTop: 2,
+  },
+  consentCheckboxChecked: {
+    backgroundColor: "#7C5CFF",
+    borderColor: "#7C5CFF",
+  },
+  consentLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: "#4B5563",
+    fontFamily: "PoppinsRegular",
+    lineHeight: 18,
+  },
+  consentLink: {
+    color: "#7C5CFF",
+    fontFamily: "PoppinsSemiBold",
+    textDecorationLine: "underline",
+  },
+  buttonDisabled: {
+    backgroundColor: "#E5E7EB",
+  },
 });
